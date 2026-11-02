@@ -81,6 +81,15 @@ Prueba de oro (Fase 1): netos $359.00 / $493.62 / $450.00, gastos $531.50 →
 $146.48 / $201.41 / $183.61. Parte de Enrique: Renta $77.16 · Luz $8.96 ·
 Agua $3.86 · Internet $6.89 · Comida $49.61 (suma $146.48).
 
+**Doble restricción (A2):** el reparto cumple a la vez que cada gasto suma
+exactamente su monto y que el total de cada persona es el del mayor resto sobre
+el total general. Se resuelve como problema de transporte (redondeo
+controlado + flujo máximo) en `src/lib/calc/balance.ts`; si la participación lo
+hace imposible (nadie puede pagar un gasto) cae al modelo por gasto. Con los
+datos de prueba los totales son exactos (146.48 / 201.41 / 183.61) y el detalle
+por gasto de Enrique varía ≤2 ¢: Renta 77.18 · Luz 8.97 · Agua 3.85 ·
+Internet 6.88 · Comida 49.60 (suma 146.48).
+
 ## Lenguaje de movimiento (`src/motion/tokens.ts`)
 
 - Curva «cine»: `cubic-bezier(.22, 1, .36, 1)`.
@@ -101,7 +110,7 @@ Agua $3.86 · Internet $6.89 · Comida $49.61 (suma $146.48).
 | — | Cálculo puro + pruebas (Vitest) | ✔ |
 | — | Capa de datos escrita (`src/data/*`, aún sin conectar) | ✔ |
 | A1 | Conectar la capa de datos (`index.ts`, `session.tsx`, imports, borra `mock.ts`) | ✔ |
-| A2 | Reparto con doble restricción (146.48 / 201.41 / 183.61) | pendiente |
+| A2 | Reparto con doble restricción (146.48 / 201.41 / 183.61) | ✔ |
 | B | Cableado raíz (`NidoProvider` + `MotionRoot` + `RealtimeBridge`, `motion.css`, `AnimatePresence`) | pendiente |
 | C | Supabase: migraciones SQL, RLS, RPC, triggers, `.env.example` | pendiente |
 | D | Entrada funcional + rutas protegidas + cerrar sesión / eliminar cuenta | pendiente |
@@ -120,8 +129,8 @@ Agua $3.86 · Internet $6.89 · Comida $49.61 (suma $146.48).
 | Requisito | Estado | Nota |
 | --- | --- | --- |
 | `npm run build` limpio (`strict: true`) | ✔ | sin errores ni avisos |
-| Prueba de oro del cálculo | ◐ | totales ideales documentados; falta A2 |
-| Pruebas unitarias del cálculo (Vitest) | ✔ | 22 pruebas en verde |
+| Prueba de oro del cálculo | ✔ | 146.48 / 201.41 / 183.61 exactos |
+| Pruebas unitarias del cálculo (Vitest) | ✔ | 25 pruebas en verde |
 | Sin errores/avisos de consola | ✔ | 14 rutas verificadas tras A1 |
 | Capa de datos conectada (mismos hooks) | ✔ | A1 (build + consola OK) |
 | Tiempo real entre dos sesiones | pendiente | requiere proyecto Supabase real |

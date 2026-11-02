@@ -5,58 +5,18 @@
  * con el **método del mayor resto** para que la suma siempre dé el total exacto.
  */
 import { TAX_SETTINGS, type TaxSettings } from "./settings";
+import { largestRemainder, round2, toCents } from "./money";
+import { balanceToIdeal, type BalanceRow } from "./balance";
 
 export { TAX_SETTINGS, ISR_BRACKETS_2025, TAX_SOURCE_NOTE } from "./settings";
 export type { TaxSettings, IsrBracket } from "./settings";
+export { toCents, fromCents, round2, largestRemainder } from "./money";
+export { balanceToIdeal } from "./balance";
+export type { BalanceRow, BalanceResult } from "./balance";
 
 /* ============================================================
    Dinero
    ============================================================ */
-
-/** Convierte dólares a centavos enteros. */
-export function toCents(value: number): number {
-  return Math.round(value * 100);
-}
-
-/** Convierte centavos enteros a dólares. */
-export function fromCents(cents: number): number {
-  return cents / 100;
-}
-
-/** Redondea a 2 decimales evitando el error de coma flotante. */
-export function round2(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
-}
-
-/**
- * Reparte `totalCents` entre varios pesos con el **método del mayor resto**.
- * El resultado siempre suma exactamente `totalCents`.
- */
-export function largestRemainder(totalCents: number, weights: number[]): number[] {
-  const n = weights.length;
-  if (n === 0) return [];
-  const total = weights.reduce((a, b) => a + b, 0);
-  if (total <= 0) {
-    // Sin pesos: reparto igual, también con mayor resto.
-    return largestRemainder(totalCents, weights.map(() => 1));
-  }
-
-  const exact = weights.map((w) => (totalCents * w) / total);
-  const out = exact.map((v) => Math.floor(v));
-  let rest = totalCents - out.reduce((a, b) => a + b, 0);
-
-  const order = exact
-    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
-    .sort((a, b) => b.frac - a.frac || a.i - b.i);
-
-  let k = 0;
-  while (rest > 0 && order.length > 0) {
-    out[order[k % order.length].i] += 1;
-    k += 1;
-    rest -= 1;
-  }
-  return out;
-}
 
 /* ============================================================
    Descuentos de ley (AFP · ISSS · Renta)
@@ -174,13 +134,15 @@ export interface ShareResult {
 }
 
 /**
- * Reparte cada gasto entre sus participantes.
+ * Reparte los gastos entre sus participantes.
  *
- * - `salary`: peso = neto de cada participante (solo de quienes participan).
- * - `equal`: todos los participantes pesan igual.
+ * - `salary`: primero busca el reparto con **doble restricción** (cada gasto
+ *   suma su monto y cada persona queda con el total del mayor resto sobre el
+ *   total general). Si la participación lo hace imposible, cae al reparto por
+ *   gasto.
+ * - `equal`: reparto por gasto en partes iguales.
  *
- * Cada gasto suma exactamente su total y el total general es la suma de las
- * partes.
+ * En todos los casos cada gasto suma exactamente su total.
  */
 export function calcShares(
   expenses: CalcExpense[],
@@ -200,20 +162,39 @@ export function calcShares(
     const participants = e.memberIds.filter((id) => weightOf.has(id));
     const amounts: Record<string, number> = {};
 
-    if (participants.length === 0) {
-      byExpense[e.id] = amounts;
-      continue;
+    if (participants.length > 0) {
+      const weights =
+        mode === "equal"
+          ? participants.map(() => 1)
+          : participants.map((id) => weightOf.get(id)!);
+      const parts = largestRemainder(total, weights);
+      participants.forEach((id, i) => {
+        amounts[id] = parts[i];
+      });
     }
-
-    const weights =
-      mode === "equal" ? participants.map(() => 1) : participants.map((id) => weightOf.get(id)!);
-    const parts = largestRemainder(total, weights);
-    participants.forEach((id, i) => {
-      amounts[id] = parts[i];
-      byMember[id] += parts[i];
-    });
     byExpense[e.id] = amounts;
   }
 
+  // «Según sueldo»: intenta el reparto con doble restricción.
+  if (mode === "salary") {
+    const rows: BalanceRow[] = expenses.map((e) => ({
+      id: e.id,
+      total: expenseMonthlyCents(e),
+      participants: e.memberIds
+        .filter((id) => weightOf.has(id))
+        .map((id) => ({ id, weight: weightOf.get(id)! }))
+    }));
+    const balanced = balanceToIdeal(
+      rows,
+      members.map((m) => m.id)
+    );
+    if (balanced) {
+      return { byExpense: balanced.byExpense, byMember: balanced.byMember, totalCents };
+    }
+  }
+
+  for (const e of expenses) {
+    for (const [id, value] of Object.entries(byExpense[e.id])) byMember[id] += value;
+  }
   return { byExpense, byMember, totalCents };
 }

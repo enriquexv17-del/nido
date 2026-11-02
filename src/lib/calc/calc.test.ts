@@ -66,24 +66,38 @@ describe("prueba de oro del reparto (datos de la Fase 1)", () => {
     expect(total).toBe(53150);
   });
 
-  it("la parte de Enrique es $146.49 (ver nota de redondeo)", () => {
-    // El reparto por gasto con mayor resto da $146.49. El «ideal» del total
-    // redondeado es $146.48; la diferencia de 1 centavo se explica en PLAN2.md.
-    expect(result.byMember.enrique).toBe(14649);
+  it("la parte de cada quien es el mayor resto del total (146.48 / 201.41 / 183.61)", () => {
+    expect(result.byMember.enrique).toBe(14648);
+    expect(result.byMember.joaquin).toBe(20141);
+    expect(result.byMember.jefferson).toBe(18361);
   });
 
-  it("la parte de cada quien respeta el mayor resto", () => {
-    expect(result.byMember.enrique).toBe(14649);
-    expect(result.byMember.joaquin).toBe(20139);
-    expect(result.byMember.jefferson).toBe(18362);
+  it("coincide con el mayor resto aplicado al total del hogar", () => {
+    const ideal = largestRemainder(
+      53150,
+      members.map((m) => m.netWeight)
+    );
+    expect(ideal).toEqual([14648, 20141, 18361]);
+    expect([
+      result.byMember.enrique,
+      result.byMember.joaquin,
+      result.byMember.jefferson
+    ]).toEqual(ideal);
   });
 
-  it("el detalle gasto por gasto de Enrique es correcto", () => {
-    expect(result.byExpense.renta.enrique).toBe(7717);
-    expect(result.byExpense.luz.enrique).toBe(896);
-    expect(result.byExpense.agua.enrique).toBe(386);
-    expect(result.byExpense.internet.enrique).toBe(689);
-    expect(result.byExpense.comida.enrique).toBe(4961);
+  it("el detalle de Enrique suma $146.48 (varía ≤2¢ respecto al diseño)", () => {
+    // Doble restricción: los totales son exactos; el detalle por gasto puede
+    // moverse 1–2 centavos respecto al diseño, pero siempre suma $146.48.
+    expect(result.byExpense.renta.enrique).toBe(7718);
+    expect(result.byExpense.luz.enrique).toBe(897);
+    expect(result.byExpense.agua.enrique).toBe(385);
+    expect(result.byExpense.internet.enrique).toBe(688);
+    expect(result.byExpense.comida.enrique).toBe(4960);
+    const sum = EXPENSES.map((e) => result.byExpense[e.id].enrique).reduce(
+      (a, b) => a + b,
+      0
+    );
+    expect(sum).toBe(14648);
   });
 
   it("documenta el reparto «ideal» del total (valores de la especificación)", () => {
@@ -94,6 +108,53 @@ describe("prueba de oro del reparto (datos de la Fase 1)", () => {
       members.map((m) => m.netWeight)
     );
     expect(ideal).toEqual([14648, 20141, 18361]);
+  });
+});
+
+/* ============================================================
+   Reparto con doble restricción
+   ============================================================ */
+
+describe("reparto con doble restricción", () => {
+  it("los totales coinciden con el mayor resto y cada gasto suma su monto", () => {
+    const members = goldenMembers();
+    const r = calcShares(EXPENSES, members, "salary");
+    const ideal = largestRemainder(53150, members.map((m) => m.netWeight));
+    expect([r.byMember.enrique, r.byMember.joaquin, r.byMember.jefferson]).toEqual(ideal);
+    for (const e of EXPENSES) {
+      const sum = Object.values(r.byExpense[e.id]).reduce((a, b) => a + b, 0);
+      expect(sum).toBe(expenseMonthlyCents(e));
+    }
+  });
+
+  it("grupos separados: no rompe las sumas y respeta la participación", () => {
+    const members4: CalcMember[] = [
+      { id: "a", netWeight: 100 },
+      { id: "b", netWeight: 200 },
+      { id: "c", netWeight: 300 },
+      { id: "d", netWeight: 400 }
+    ];
+    const expenses: CalcExpense[] = [
+      { id: "e1", type: "monthly", amount: 30, memberIds: ["a", "b"] },
+      { id: "e2", type: "monthly", amount: 70, memberIds: ["c", "d"] }
+    ];
+    const r = calcShares(expenses, members4, "salary");
+    expect(Object.keys(r.byExpense.e1)).toEqual(["a", "b"]);
+    expect(r.byExpense.e1.a + r.byExpense.e1.b).toBe(3000);
+    expect(r.byExpense.e2.c + r.byExpense.e2.d).toBe(7000);
+    expect(r.byMember.a + r.byMember.b).toBe(3000);
+    expect(r.byMember.c + r.byMember.d).toBe(7000);
+  });
+
+  it("si nadie puede pagar un gasto, cae al modelo por gasto sin romper sumas", () => {
+    const r = calcShares(
+      [{ id: "e", type: "monthly", amount: 50, memberIds: ["fantasma"] }],
+      [{ id: "a", netWeight: 100 }],
+      "salary"
+    );
+    expect(r.totalCents).toBe(5000);
+    expect(r.byMember.a).toBe(0);
+    expect(r.byExpense.e).toEqual({});
   });
 });
 
