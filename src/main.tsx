@@ -15,6 +15,7 @@ import "./styles/screens.css";
 import "./styles/motion.css";
 
 import { MotionRoot } from "./motion";
+import { ThemeProvider } from "./lib/theme";
 import App from "./App";
 
 // Bloquea el zoom accidental por doble toque (iOS).
@@ -33,8 +34,10 @@ registerSW({ immediate: true });
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <MotionRoot>
-      <App />
-    </MotionRoot>
+    <ThemeProvider>
+      <MotionRoot>
+        <App />
+      </MotionRoot>
+    </ThemeProvider>
   </StrictMode>
 );

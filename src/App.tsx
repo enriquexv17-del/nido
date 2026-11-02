@@ -17,6 +17,7 @@ import { RepartoDetalle } from "./screens/RepartoDetalle";
 import { Mas } from "./screens/Mas";
 import { Integrantes } from "./screens/Integrantes";
 import { Descuentos } from "./screens/Descuentos";
+import { Apariencia } from "./screens/Apariencia";
 import { Actualizaciones } from "./screens/Actualizaciones";
 import { OtrosIngresos } from "./screens/OtrosIngresos";
 import { Ahorros } from "./screens/Ahorros";
@@ -76,6 +77,7 @@ export default function App() {
               <Route path="/mas" element={<Mas />} />
               <Route path="/mas/integrantes" element={<Integrantes />} />
               <Route path="/mas/descuentos" element={<Descuentos />} />
+              <Route path="/mas/apariencia" element={<Apariencia />} />
               <Route path="/mas/otros-ingresos" element={<OtrosIngresos />} />
               <Route path="/mas/ahorros" element={<Ahorros />} />
               <Route path="/mas/actualizaciones" element={<Actualizaciones />} />

@@ -56,7 +56,7 @@
 /* ---------- Barra de pestañas ---------- */
 .tabbar {
   display: flex;
-  background: #fff;
+  background: var(--card);
   border-top: 1px solid var(--line);
   padding: 6px 6px calc(env(safe-area-inset-bottom) + 6px);
 }
@@ -275,7 +275,7 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
   color: var(--jade-d);
   display: grid;
   place-items: center;
@@ -443,7 +443,7 @@
 
 /* ---------- Código de invitación ---------- */
 .invite-code-card {
-  background: #fff;
+  background: var(--card);
   border-radius: 18px;
   box-shadow: var(--shadow-card);
   padding: 18px;
@@ -523,7 +523,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #fff;
+  background: var(--card);
   border-radius: 16px;
   box-shadow: var(--shadow-card);
   padding: 14px;
@@ -961,7 +961,7 @@
   height: 52px;
   border-radius: 18px;
   border: none;
-  background: var(--anil);
+  background: var(--anil-solid);
   color: #fff;
   display: grid;
   place-items: center;
@@ -1032,7 +1032,7 @@
   padding: 0 12px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   font-size: 12.5px;
   font-weight: 500;
   color: var(--ink);
@@ -1242,7 +1242,7 @@ button.settings-row {
 }
 
 .settings-chevron {
-  color: #c3c7de;
+  color: var(--chevron);
   transition: transform var(--dur-micro) var(--ease-cine);
 }
 
@@ -1317,7 +1317,7 @@ button.settings-row {
   display: flex;
   gap: 12px;
   text-align: left;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 14px;
@@ -1523,7 +1523,7 @@ button.settings-row {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 7px 9px;
-  background: var(--card, #fff);
+  background: var(--card);
   color: var(--ink);
   font-size: 12.5px;
 }
@@ -1601,6 +1601,84 @@ button.settings-row {
   background: var(--anil-l);
   border-radius: 8px;
   padding: 3px 8px;
+  flex: none;
+}
+
+/* ---------- Apariencia (Fase 4) ---------- */
+.ape-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ape-title {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.accent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.accent-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 6px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  transition: border-color var(--dur-micro) var(--ease-cine),
+    transform var(--dur-micro) var(--ease-spring);
+}
+
+.accent-swatch:active {
+  transform: scale(0.96);
+}
+
+.accent-swatch.is-active {
+  border-color: var(--anil);
+}
+
+.accent-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  box-shadow: 0 2px 6px -2px rgba(23, 27, 52, 0.4);
+}
+
+.accent-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.accent-swatch.is-active .accent-name {
+  color: var(--ink);
+}
+
+.ape-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.ape-preview-pill {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--anil-solid);
+  border-radius: 8px;
+  padding: 4px 9px;
   flex: none;
 }
 
@@ -1743,7 +1821,7 @@ button.settings-row {
 }
 
 .desk-stat {
-  background: #fff;
+  background: var(--card);
   border-radius: 18px;
   box-shadow: var(--shadow-card);
   padding: 18px;
@@ -1910,7 +1988,7 @@ button.settings-row {
     width: 210px;
     flex: none;
     height: 100%;
-    background: #fff;
+    background: var(--card);
     border-right: 1px solid var(--line);
     padding: 16px 14px;
   }

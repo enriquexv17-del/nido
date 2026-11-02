@@ -8,12 +8,30 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#18205F" />
+    <meta name="theme-color" content="#18205F" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e1122" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Nido" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="description" content="Sueldos y gastos del hogar, repartidos justo." />
     <title>Nido</title>
+    <!-- Aplica el tema guardado antes de pintar para evitar el destello claro. -->
+    <script>
+      (function () {
+        try {
+          var mode = localStorage.getItem("nido.theme.mode") || "auto";
+          var accent = localStorage.getItem("nido.theme.accent") || "indigo";
+          var dark =
+            mode === "dark" ||
+            (mode === "auto" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          var root = document.documentElement;
+          root.dataset.theme = dark ? "dark" : "light";
+          root.dataset.accent = accent;
+          root.style.colorScheme = dark ? "dark" : "light";
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

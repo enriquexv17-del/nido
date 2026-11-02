@@ -7,11 +7,20 @@
   --muted: #6c7196;
   --line: #e3e6f3;
   --bg: #f3f4fa;
+  /* Superficie de tarjetas, hojas, barras... (cambia en modo oscuro). */
+  --card: #ffffff;
+  /* Fondo del interruptor apagado. */
+  --switch-off: #d6daea;
+  /* Color del chevron de ajustes. */
+  --chevron: #c3c7de;
 
   /* Añil */
   --anil: #2f3fa0;
   --anil-d: #18205f;
   --anil-l: #e7eafb;
+  /* Acento para fondos sólidos con texto blanco (botones, FAB). En modo
+     oscuro el acento es claro, así que aquí se fija un tono más profundo. */
+  --anil-solid: var(--anil);
 
   /* Jade */
   --jade: #14b38b;
@@ -64,6 +73,169 @@
   --dur-scene: 600ms;
   --stagger: 50ms;
 }
+
+/* ============================================================
+   Modo oscuro (Fase 4)
+   ------------------------------------------------------------
+   Los tokens «-l» (fondos tenues) se vuelven tintes oscuros y los
+   «-d» (usados como texto sobre esos tintes) se aclaran para
+   mantener el contraste AA. Las superficies pasan a `--card`.
+   ============================================================ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ink: #eef1fb;
+  --muted: #9aa2c9;
+  --line: #2c3159;
+  --bg: #0e1122;
+  --card: #1a1e3c;
+  --soft: #222747;
+  --soft-line: #2b3055;
+  --switch-off: #414868;
+  --chevron: #767ca6;
+
+  --anil: #8a98ff;
+  --anil-d: #c3cbff;
+  --anil-l: #262c54;
+
+  --jade: #2bd6a6;
+  --jade-d: #8bf0d4;
+  --jade-l: #123b32;
+
+  --maiz: #f5b83d;
+  --maiz-l: #3a2f14;
+  --maiz-text: #f6cd74;
+
+  --coral: #ff7b74;
+  --coral-l: #3d2120;
+
+  --shadow-card: 0 6px 16px -10px rgba(0, 0, 0, 0.6);
+  --shadow-float: 0 10px 24px -8px rgba(0, 0, 0, 0.7);
+}
+
+/* ============================================================
+   Colores de acento (Fase 4)
+   ------------------------------------------------------------
+   Se aplican sobre `--anil*` (el color de marca de la interfaz).
+   En modo oscuro cambian a tonos más claros para verse sobre el
+   fondo oscuro; `--anil-solid` se mantiene profundo para que el
+   texto blanco de botones y píldoras siga teniendo contraste AA.
+   ============================================================ */
+[data-accent="indigo"] {
+  --anil: #2f3fa0;
+  --anil-d: #18205f;
+  --anil-l: #e7eafb;
+}
+
+[data-accent="green"] {
+  --anil: #0b6b4a;
+  --anil-d: #075237;
+  --anil-l: #ddf3ea;
+}
+
+[data-accent="pink"] {
+  --anil: #9d174d;
+  --anil-d: #7a0f3b;
+  --anil-l: #fce7f3;
+}
+
+[data-accent="orange"] {
+  --anil: #8f4206;
+  --anil-d: #6f3305;
+  --anil-l: #ffe9d6;
+}
+
+[data-accent="teal"] {
+  --anil: #0f5f57;
+  --anil-d: #0b4a44;
+  --anil-l: #d5f3f0;
+}
+
+[data-accent="purple"] {
+  --anil: #4c1d95;
+  --anil-d: #3b1573;
+  --anil-l: #ede9fe;
+}
+
+[data-theme="dark"][data-accent="indigo"] {
+  --anil: #8a98ff;
+  --anil-d: #c3cbff;
+  --anil-l: #262c54;
+  --anil-solid: #4f46e5;
+}
+
+[data-theme="dark"][data-accent="green"] {
+  --anil: #34d399;
+  --anil-d: #a7f3d0;
+  --anil-l: #123b32;
+  --anil-solid: #047857;
+}
+
+[data-theme="dark"][data-accent="pink"] {
+  --anil: #f472b6;
+  --anil-d: #fbcfe8;
+  --anil-l: #3d1c30;
+  --anil-solid: #be185d;
+}
+
+[data-theme="dark"][data-accent="orange"] {
+  --anil: #fb923c;
+  --anil-d: #fed7aa;
+  --anil-l: #3d2814;
+  --anil-solid: #c2410c;
+}
+
+[data-theme="dark"][data-accent="teal"] {
+  --anil: #2dd4bf;
+  --anil-d: #99f6e4;
+  --anil-l: #123a37;
+  --anil-solid: #0f766e;
+}
+
+[data-theme="dark"][data-accent="purple"] {
+  --anil: #a78bfa;
+  --anil-d: #ddd6fe;
+  --anil-l: #2e2352;
+  --anil-solid: #7c3aed;
+}
+
+/* En modo oscuro los «-d» se aclaran; sobre fondos maíz seguimos
+   necesitando texto oscuro para mantener el contraste. */
+[data-theme="dark"] .btn--maize {
+  color: #18205f;
+}
+
+/* Tarjetas oscuras (antes fijas en añil) pasan a superficie legible. */
+[data-theme="dark"] .dark-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .dark-card-label {
+  color: var(--muted);
+}
+
+[data-theme="dark"] .jade-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .jade-card span,
+[data-theme="dark"] .jade-card strong {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .jade-card span {
+  color: var(--muted);
+}
+
+/* El anillo del avatar debe coincidir con la superficie de la tarjeta. */
+[data-theme="dark"] .avatar--ring {
+  box-shadow: 0 0 0 2px var(--card);
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   *,

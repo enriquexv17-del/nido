@@ -49,7 +49,7 @@
 }
 
 .skeleton-card {
-  background: #fff;
+  background: var(--card);
   border-radius: var(--r-card);
   padding: 14px;
   display: flex;

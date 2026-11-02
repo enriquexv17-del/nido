@@ -9,6 +9,7 @@ import { Dialog } from "../components/Dialog";
 import { DevSwitcher } from "../components/DevSwitcher";
 import { useSession } from "../lib/session";
 import { useAppUpdate } from "../lib/useAppUpdate";
+import { useTheme, ACCENTS, THEME_MODES } from "../lib/theme";
 import { useAuth, useGoals, useOtherIncomes, usePeople } from "../data";
 import { formatUSD } from "../lib/format";
 
@@ -30,12 +31,16 @@ export function Mas() {
   const count = people.length;
   const { signOut, deleteAccount } = useAuth();
   const { installed, hasUpdate } = useAppUpdate();
+  const { mode, accent } = useTheme();
   const otherIncomes = useOtherIncomes();
   const extraTotal = otherIncomes.reduce((sum, o) => sum + o.amount, 0);
   const goals = useGoals();
   const goalsSaved = goals.reduce((sum, g) => sum + g.saved, 0);
   const [confirm, setConfirm] = useState<null | "signout" | "delete">(null);
   const [busy, setBusy] = useState(false);
+
+  const modeLabel = THEME_MODES.find((m) => m.value === mode)?.label ?? "Automático";
+  const accentLabel = ACCENTS.find((a) => a.id === accent)?.label ?? "Índigo";
 
   const rows: Row[] = [
     {
@@ -59,7 +64,8 @@ export function Mas() {
       color: "#6A4BD8",
       colorBg: "#ECE6FD",
       title: "Cómo se reparte",
-      sub: "Según sueldo neto"
+      sub: "Mira y ajusta el reparto",
+      to: "/reparto"
     },
     {
       icon: "dollar",
@@ -73,7 +79,8 @@ export function Mas() {
       color: "#2F3FA0",
       colorBg: "#E7EAFB",
       title: "Apariencia",
-      sub: "Automática"
+      sub: `${modeLabel} · ${accentLabel}`,
+      to: "/mas/apariencia"
     },
     {
       icon: "coins",
