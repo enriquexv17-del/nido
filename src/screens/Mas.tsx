@@ -9,6 +9,7 @@ import { Dialog } from "../components/Dialog";
 import { DevSwitcher } from "../components/DevSwitcher";
 import { useSession } from "../lib/session";
 import { useAuth, usePeople } from "../data";
+import { useAppUpdate } from "../lib/useAppUpdate";
 
 interface Row {
   icon: IconName;
@@ -25,6 +26,7 @@ export function Mas() {
   const people = usePeople();
   const count = people.length;
   const { signOut, deleteAccount } = useAuth();
+  const { installed, hasUpdate } = useAppUpdate();
   const [confirm, setConfirm] = useState<null | "signout" | "delete">(null);
   const [busy, setBusy] = useState(false);
 
@@ -71,7 +73,7 @@ export function Mas() {
       color: "#D5503F",
       colorBg: "#FDE6E3",
       title: "Actualizaciones",
-      sub: "Nido 1.0.0 · estás al día",
+      sub: `Nido ${installed} · ${hasUpdate ? "hay una nueva" : "estás al día"}`,
       to: "/mas/actualizaciones"
     }
   ];

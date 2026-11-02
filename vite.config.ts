@@ -14,7 +14,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2,ico}"]
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2,ico,json}"]
       },
       manifest: {
         name: "Nido",

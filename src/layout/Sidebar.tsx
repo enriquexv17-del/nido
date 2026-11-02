@@ -2,6 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { Icon, Logo } from "../components/Icon";
 import { Avatar } from "../components/Avatar";
 import { useHousehold } from "../data";
+import { APP_VERSION } from "../lib/appInfo";
 import { useSession } from "../lib/session";
 import { TABS } from "./TabBar";
 
@@ -41,7 +42,7 @@ export function Sidebar() {
             <span className="sidebar-user-home">{household.name}</span>
           </div>
         </div>
-        <span className="sidebar-version">Versión 1.0.0</span>
+        <span className="sidebar-version">Versión {APP_VERSION}</span>
       </div>
     </aside>
   );

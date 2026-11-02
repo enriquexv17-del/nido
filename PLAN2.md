@@ -118,7 +118,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | F | Animaciones escenas 5-8 (ingresos, gastos, sheets, reparto) | ✔ |
 | G | Animaciones escenas 9–11 + estados (skeletons, vacío, error, sin conexión) | ✔ |
 | H | Meses navegables + «Copiar de octubre» + caché sin conexión | ✔ |
-| I | Pantalla Actualizaciones funcional | pendiente |
+| I | Pantalla Actualizaciones funcional | ✔ |
 | J | Empaquetado (Capacitor Android + Tauri Windows) | pendiente |
 | K | GitHub Actions (Pages + Releases) | pendiente |
 | L | Pruebas de flujos + `perf` + `lighthouse` + capturas | pendiente |
@@ -137,6 +137,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | Estados de carga, vacío, error y sin conexión | ✔ | esqueletos con shimmer; aviso «Sin conexión» probado sin red |
 | Meses navegables y «Copiar de <mes anterior>» | ✔ | Sep/Oct/Nov fijos; cambiar de mes recalcula; copiar funciona |
 | Sin conexión: reabre con los últimos datos | ✔ | service worker + almacén local; editar sin conexión también |
+| Actualizaciones compara versiones reales | ✔ | instalada (`package.json`) vs. publicada (`version.json`); descarga e instala |
 | Animaciones ≥ 55 fps con CPU ×4 | pendiente | `npm run perf` |
 | Diseño sin cambios vs. Fase 1 | pendiente | capturas en el paso L |
 | APK firmado | pendiente | requiere Android SDK + keystore (tuyo) |
@@ -195,3 +196,8 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
     «pendiente» que reintentar; el aviso «Sin conexión» solo informa. El modo
     Supabase necesitará una cola de escrituras y persistencia de la caché de
     React Query, que se añadirá al conectar tus claves (no se inventa aquí).
+13. **Actualizaciones con datos reales:** la versión instalada sale de
+    `package.json` y la publicada de `public/version.json`; la pantalla las
+    compara. La barra de descarga es simulada (todavía no hay APK que bajar) y
+    «Instalar y reiniciar» aplica la PWA (service worker + recarga). La barra
+    lateral y la fila de «Más» muestran la versión real.
