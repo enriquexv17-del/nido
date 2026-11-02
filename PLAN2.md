@@ -113,7 +113,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | A2 | Reparto con doble restricción (146.48 / 201.41 / 183.61) | ✔ |
 | B | Cableado raíz (`NidoProvider` + `MotionRoot` + `RealtimeBridge`, `motion.css`, `AnimatePresence`) | ✔ |
 | C | Supabase: migraciones SQL, RLS, RPC, triggers, `.env.example` | ✔ |
-| D | Entrada funcional + rutas protegidas + cerrar sesión / eliminar cuenta | pendiente |
+| D | Entrada funcional + rutas protegidas + cerrar sesión / eliminar cuenta | ✔ |
 | E | Animaciones escenas 1–4 (bienvenida, transiciones, pasos, inicio) | pendiente |
 | F | Animaciones escenas 5–8 (ingresos, gastos, sheets, reparto) | pendiente |
 | G | Animaciones escenas 9–11 + estados (skeletons, vacío, error, sin conexión) | pendiente |
@@ -157,3 +157,12 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
    personas de la capa de datos y necesita ese contexto; sin él la app no
    arranca. En B se completa el cableado raíz (`MotionRoot`, `RealtimeBridge`,
    `motion.css`, transiciones con `AnimatePresence`).
+6. **Entrada sin `AnimatePresence`:** las pantallas de entrada (bienvenida,
+   cuenta, hogar, invitar, unirme) se animan al entrar pero **no al salir**.
+   Con `mode="wait"` el formulario se remontaba al terminar la animación y
+   perdía lo escrito; con la clave por ruta se conserva el estado. Las
+   pestañas de la app sí usan `AnimatePresence` (fundido cruzado).
+7. **Modo demostración real:** crear un hogar deja un hogar nuevo con una sola
+   persona (nombre y color elegidos) y sin gastos; unirse agrega a la persona
+   por nombre. Con `?dev=1` aparece «Restaurar ejemplo» para volver a los datos
+   de la maqueta (146.48 / 201.41 / 183.61).

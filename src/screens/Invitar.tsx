@@ -6,18 +6,20 @@ import { Icon } from "../components/Icon";
 import { PersonRow } from "../components/PersonRow";
 import { Toast } from "../components/Toast";
 import { useHousehold, usePeople } from "../data";
-import { copyText } from "../lib/session";
+import { copyText, useSession } from "../lib/session";
 
 export function Invitar() {
   const navigate = useNavigate();
   const household = useHousehold();
   const people = usePeople();
-  const enrique = people[0];
+  const { person } = useSession();
   const [toast, setToast] = useState<string | null>(null);
 
   const waText = encodeURIComponent(
     `Únete a mi hogar en Nido con este código: ${household.code}`
   );
+
+  const freeSlots = Math.max(0, 3 - people.length);
 
   return (
     <EntryScreen
@@ -58,24 +60,23 @@ export function Invitar() {
       </div>
 
       <div className="invite-members">
-        <span className="section-label">Integrantes · 1 de 3</span>
-        <PersonRow person={enrique}>
-          <span className="person-row-owner">Tú · administras el hogar</span>
-        </PersonRow>
-        <div className="slot-card">
-          <span className="slot-bubble">2</span>
-          <div className="slot-text">
-            <span className="slot-title">Persona 2</span>
-            <span className="slot-sub">Lugar libre</span>
+        <span className="section-label">
+          Integrantes · {people.length} de 3
+        </span>
+        {person.id ? (
+          <PersonRow person={person}>
+            <span className="person-row-owner">Tú · administras el hogar</span>
+          </PersonRow>
+        ) : null}
+        {Array.from({ length: freeSlots }, (_, i) => (
+          <div className="slot-card" key={i}>
+            <span className="slot-bubble">{people.length + i + 1}</span>
+            <div className="slot-text">
+              <span className="slot-title">Persona {people.length + i + 1}</span>
+              <span className="slot-sub">Lugar libre</span>
+            </div>
           </div>
-        </div>
-        <div className="slot-card">
-          <span className="slot-bubble">3</span>
-          <div className="slot-text">
-            <span className="slot-title">Persona 3</span>
-            <span className="slot-sub">Lugar libre</span>
-          </div>
-        </div>
+        ))}
       </div>
 
       {toast ? <Toast message={toast} onDone={() => setToast(null)} /> : null}

@@ -292,9 +292,7 @@ export async function copyMonth(from: string, to: string): Promise<void> {
 
 export async function createHousehold(name: string, memberName: string, color: string): Promise<string> {
   if (!isSupabaseConfigured || !supabase) {
-    const s = mockStore().get();
-    mockStore().regenerateCode();
-    return s.household.id;
+    return mockStore().createHousehold(name, memberName, color);
   }
   const { data, error } = await supabase.rpc("create_household", {
     p_name: name,
@@ -309,7 +307,10 @@ export async function joinHousehold(code: string, memberName: string, color: str
   if (!isSupabaseConfigured || !supabase) {
     const store = mockStore();
     const existing = store.get().members.find((m) => m.name === memberName);
-    if (!existing) store.addMember(memberName, color);
+    if (!existing) {
+      const added = store.joinByName(memberName, color);
+      if (!added) throw new Error("HOGAR_LLENO");
+    }
     return store.get().household.id;
   }
   const { data, error } = await supabase.rpc("join_household", {

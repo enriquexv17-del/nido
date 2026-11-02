@@ -1,7 +1,7 @@
-import { HashRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
-import { AnimatePresence, m } from "./motion";
+import { HashRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { m } from "./motion";
 import { useScreenTransition } from "./motion/useScreenTransition";
-import { NidoProvider, RealtimeBridge } from "./data";
+import { NidoProvider, RealtimeBridge, useAuth } from "./data";
 import { SessionProvider } from "./lib/session";
 import { AppShell } from "./layout/AppShell";
 import { Welcome } from "./screens/Welcome";
@@ -19,23 +19,33 @@ import { Integrantes } from "./screens/Integrantes";
 import { Descuentos } from "./screens/Descuentos";
 import { Actualizaciones } from "./screens/Actualizaciones";
 
-/** Transición de las pantallas de entrada (bienvenida, cuenta, hogar...). */
+/**
+ * Transición de las pantallas de entrada. Se monta una sola vez por ruta
+ * (sin `AnimatePresence`) para que los formularios no pierdan lo escrito
+ * mientras termina la animación.
+ */
 function EntryTransition() {
-  const { key, variants } = useScreenTransition();
+  const { pathname } = useLocation();
+  const { variants } = useScreenTransition();
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <m.div
-        key={key}
-        className="screen-transition"
-        variants={variants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-      >
-        <Outlet />
-      </m.div>
-    </AnimatePresence>
+    <m.div
+      key={pathname}
+      className="screen-transition"
+      variants={variants}
+      initial="initial"
+      animate="animate"
+    >
+      <Outlet />
+    </m.div>
   );
+}
+
+/** Rutas de la app: sin sesión no se entra (vuelve a la bienvenida). */
+function RequireSession() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="route-loading" aria-hidden="true" />;
+  if (!user) return <Navigate to="/bienvenida" replace />;
+  return <AppShell />;
 }
 
 export default function App() {
@@ -55,7 +65,7 @@ export default function App() {
               <Route path="/unirme" element={<Unirme />} />
             </Route>
 
-            <Route element={<AppShell />}>
+            <Route element={<RequireSession />}>
               <Route path="/inicio" element={<Inicio />} />
               <Route path="/ingresos" element={<Ingresos />} />
               <Route path="/gastos" element={<Gastos />} />

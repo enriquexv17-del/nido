@@ -6,7 +6,7 @@
  * (`useHousehold`, `usePeople`, `Person`, `Expense`...) para que la interfaz no
  * cambie; por dentro ahora son datos reales (Supabase) o el almacén de prueba.
  */
-import { MOCK_SEED } from "./mock.dev";
+import { MOCK_SEED, mockStore } from "./mock.dev";
 import { derive } from "./selectors";
 import type { Person, PersonId } from "./types";
 
@@ -64,8 +64,11 @@ export {
   useExpenseActions,
   useIncomeActions,
   useMemberActions,
-  useCopyMonth
+  useCopyMonth,
+  useHouseholdSetup
 } from "./mutations";
+
+export { previewHousehold } from "./api";
 
 export { derive };
 
@@ -79,4 +82,9 @@ export { derive };
 export function getPerson(id: PersonId): Person {
   const { people } = derive(MOCK_SEED, null);
   return people.find((p) => p.id === id) ?? people[0];
+}
+
+/** Restaura los datos de ejemplo del modo demostración (para pruebas). */
+export function resetDemoData(): void {
+  mockStore().reset();
 }

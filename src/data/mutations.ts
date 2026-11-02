@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "./api";
+import { clearHouseholdCache } from "./api";
 import { useAuth } from "./auth";
 import { useDataContext } from "./provider";
 import { useDerived } from "./queries";
@@ -99,4 +100,33 @@ export function useCopyMonth() {
     onSuccess: invalidate
   });
   return { copyMonth: copy.mutateAsync, isSaving: copy.isPending };
+}
+
+/**
+ * Crear y unirse a un hogar. Al terminar, limpia la caché del hogar y refresca
+ * todo para que la app muestre los datos nuevos al instante.
+ */
+export function useHouseholdSetup() {
+  const qc = useQueryClient();
+  const invalidate = useCallback(() => {
+    clearHouseholdCache();
+    void qc.invalidateQueries();
+  }, [qc]);
+
+  const create = useMutation({
+    mutationFn: (args: { name: string; memberName: string; color: string }) =>
+      api.createHousehold(args.name, args.memberName, args.color),
+    onSuccess: invalidate
+  });
+  const join = useMutation({
+    mutationFn: (args: { code: string; memberName: string; color: string }) =>
+      api.joinHousehold(args.code, args.memberName, args.color),
+    onSuccess: invalidate
+  });
+
+  return {
+    createHousehold: create.mutateAsync,
+    joinHousehold: join.mutateAsync,
+    isSaving: create.isPending || join.isPending
+  };
 }

@@ -1,17 +1,68 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EntryShell } from "../layout/EntryShell";
 import { Field } from "../components/Field";
 import { Button } from "../components/Button";
-import { Icon } from "../components/Icon";
-import { Logo } from "../components/Icon";
-import { COLOR_CHOICES } from "../data";
+import { Icon, Logo } from "../components/Icon";
+import { COLOR_CHOICES, previewHousehold, useAuth, useHouseholdSetup } from "../data";
+
+function joinError(message: string): string {
+  if (message.includes("HOGAR_LLENO")) return "Ese hogar ya tiene 3 personas.";
+  if (message.includes("CODIGO_INVALIDO")) return "Ese código no existe. Revísalo.";
+  if (message.includes("SIN_SESION")) return "Inicia sesión para unirte.";
+  return "No pudimos unirte. Intenta de nuevo.";
+}
 
 export function Unirme() {
   const navigate = useNavigate();
-  const [code, setCode] = useState("NIDO-7K4Q");
-  const [name, setName] = useState("Joaquín");
+  const { signUpName, user, signIn, isDemo } = useAuth();
+  const { joinHousehold, isSaving } = useHouseholdSetup();
+  const [code, setCode] = useState("");
+  const [name, setName] = useState(signUpName || "Joaquín");
   const [color, setColor] = useState<string>("--p2");
+  const [preview, setPreview] = useState<{ name: string; count: number } | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const value = code.trim();
+    if (value.length < 4) {
+      setPreview(null);
+      setChecking(false);
+      return;
+    }
+    let active = true;
+    setChecking(true);
+    const t = window.setTimeout(async () => {
+      const found = await previewHousehold(value);
+      if (!active) return;
+      setPreview(found);
+      setChecking(false);
+    }, 400);
+    return () => {
+      active = false;
+      window.clearTimeout(t);
+    };
+  }, [code]);
+
+  async function onJoin() {
+    setError(null);
+    if (!preview) {
+      setError("Revisa el código del hogar.");
+      return;
+    }
+    if (name.trim().length < 2) {
+      setError("Escribe tu nombre.");
+      return;
+    }
+    try {
+      await joinHousehold({ code: code.trim(), memberName: name.trim(), color });
+      if (isDemo && !user) await signIn("", "");
+      navigate("/inicio");
+    } catch (e) {
+      setError(joinError(e instanceof Error ? e.message : ""));
+    }
+  }
 
   return (
     <EntryShell>
@@ -30,17 +81,27 @@ export function Unirme() {
         </header>
 
         <div className="entry-body">
-          <Field label="Código" value={code} onChange={setCode} />
+          <Field label="Código" value={code} onChange={setCode} autoCapitalize="characters" />
 
-          <div className="join-card">
-            <Logo size={40} />
-            <div className="join-card-text">
-              <span className="join-card-name">Nuestro depa</span>
-              <span className="join-card-sub">Creado por Enrique · 1 de 3</span>
+          {preview ? (
+            <div className="join-card">
+              <Logo size={40} />
+              <div className="join-card-text">
+                <span className="join-card-name">{preview.name}</span>
+                <span className="join-card-sub">
+                  {preview.count} de 3 · {Math.max(0, 3 - preview.count)} lugar(es) libre(s)
+                </span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <p className="join-hint">
+              {checking ? "Buscando el hogar…" : "Escribe el código para ver el hogar."}
+            </p>
+          )}
 
-          <Field label="Tu nombre" value={name} onChange={setName} />
+          <Field label="Tu nombre" value={name} onChange={setName} autoComplete="name" />
+
+          {error ? <p className="form-error" role="alert">{error}</p> : null}
 
           <div className="form-block">
             <span className="form-label">Tu color en la app</span>
@@ -63,8 +124,8 @@ export function Unirme() {
         </div>
 
         <div className="entry-footer">
-          <Button block onClick={() => navigate("/inicio")}>
-            Unirme al hogar
+          <Button block onClick={onJoin} disabled={isSaving || !preview}>
+            {isSaving ? "Uniéndome…" : "Unirme al hogar"}
           </Button>
         </div>
       </div>

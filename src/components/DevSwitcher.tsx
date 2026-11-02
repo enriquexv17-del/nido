@@ -1,4 +1,5 @@
 import { useDevMode, useSession } from "../lib/session";
+import { resetDemoData } from "../data";
 
 export function DevSwitcher() {
   const dev = useDevMode();
@@ -19,6 +20,16 @@ export function DevSwitcher() {
             {p.name}
           </button>
         ))}
+        <button
+          type="button"
+          className="chip"
+          onClick={() => {
+            resetDemoData();
+            window.location.reload();
+          }}
+        >
+          Restaurar ejemplo
+        </button>
       </div>
     </div>
   );

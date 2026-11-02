@@ -244,12 +244,51 @@ class MockStore {
     this.commit({ ...this.state, members, expenses, incomes });
   }
 
-  regenerateCode(): string {
+  private newCode(): string {
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const part = Array.from({ length: 4 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
-    const code = `NIDO-${part}`;
+    return `NIDO-${part}`;
+  }
+
+  regenerateCode(): string {
+    const code = this.newCode();
     this.commit({ ...this.state, household: { ...this.state.household, code } });
     return code;
+  }
+
+  /** Crea un hogar nuevo (modo demostración): deja solo a quien lo crea. */
+  createHousehold(name: string, memberName: string, color: string): string {
+    const member: RawMember = {
+      id: uid(),
+      userId: "demo-enrique",
+      name: memberName.trim() || "Yo",
+      color: color || "--p1",
+      role: "admin",
+      position: 1,
+      email: "enrique@correo.com"
+    };
+    this.commit({
+      ...this.state,
+      household: {
+        id: uid(),
+        name: name.trim() || "Mi hogar",
+        code: this.newCode(),
+        currency: "US$",
+        monthLabel: "",
+        totalNet: 0,
+        totalExpenses: 0
+      },
+      members: [member],
+      incomes: [],
+      expenses: [],
+      activity: []
+    });
+    return this.state.household.id;
+  }
+
+  /** Une a una persona «solo con su nombre». Devuelve `null` si está lleno. */
+  joinByName(name: string, color: string): RawMember | null {
+    return this.addMember(name, color);
   }
 
   setMonth(month: string) {

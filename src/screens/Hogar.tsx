@@ -4,12 +4,34 @@ import { EntryScreen } from "../layout/EntryShell";
 import { Field } from "../components/Field";
 import { Button } from "../components/Button";
 import { Icon } from "../components/Icon";
-import { COLOR_CHOICES } from "../data";
+import { COLOR_CHOICES, useAuth, useHouseholdSetup } from "../data";
 
 export function Hogar() {
   const navigate = useNavigate();
+  const { signUpName, user, signIn, isDemo } = useAuth();
+  const { createHousehold, isSaving } = useHouseholdSetup();
   const [home, setHome] = useState("Nuestro depa");
   const [color, setColor] = useState<string>("--p1");
+  const [error, setError] = useState<string | null>(null);
+
+  async function onCreate() {
+    setError(null);
+    if (home.trim().length < 2) {
+      setError("Escribe un nombre para tu hogar.");
+      return;
+    }
+    try {
+      await createHousehold({
+        name: home.trim(),
+        memberName: (signUpName || "Yo").trim(),
+        color
+      });
+      if (isDemo && !user) await signIn("", "");
+      navigate("/invitar");
+    } catch {
+      setError("No pudimos crear el hogar. Intenta de nuevo.");
+    }
+  }
 
   return (
     <EntryScreen
@@ -17,12 +39,14 @@ export function Hogar() {
       title="Dale nombre a tu hogar"
       subtitle="Lo verán todas las personas que se unan."
       footer={
-        <Button block onClick={() => navigate("/invitar")}>
-          Crear hogar
+        <Button block onClick={onCreate} disabled={isSaving}>
+          {isSaving ? "Creando…" : "Crear hogar"}
         </Button>
       }
     >
       <Field label="Nombre del hogar" value={home} onChange={setHome} />
+
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
 
       <div className="form-block">
         <span className="form-label">Tu color en la app</span>

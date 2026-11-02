@@ -27,6 +27,7 @@ export type IconName =
   | "utensils"
   | "dots"
   | "google"
+  | "logout"
   | "whatsapp";
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "name"> {
@@ -94,6 +95,13 @@ const PATHS: Record<IconName, JSX.Element> = {
   ),
   "chevron-left": <path d="m15 18-6-6 6-6" />,
   "chevron-right": <path d="m9 18 6-6-6-6" />,
+  logout: (
+    <>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </>
+  ),
   plus: <path d="M12 5v14M5 12h14" />,
   x: <path d="M18 6 6 18M6 6l12 12" />,
   pencil: (
