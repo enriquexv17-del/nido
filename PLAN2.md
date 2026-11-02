@@ -114,7 +114,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | B | Cableado raíz (`NidoProvider` + `MotionRoot` + `RealtimeBridge`, `motion.css`, `AnimatePresence`) | ✔ |
 | C | Supabase: migraciones SQL, RLS, RPC, triggers, `.env.example` | ✔ |
 | D | Entrada funcional + rutas protegidas + cerrar sesión / eliminar cuenta | ✔ |
-| E | Animaciones escenas 1–4 (bienvenida, transiciones, pasos, inicio) | pendiente |
+| E | Animaciones escenas 1–4 (bienvenida, transiciones, pasos, inicio) | ✔ |
 | F | Animaciones escenas 5–8 (ingresos, gastos, sheets, reparto) | pendiente |
 | G | Animaciones escenas 9–11 + estados (skeletons, vacío, error, sin conexión) | pendiente |
 | H | Meses navegables + «Copiar de octubre» + caché sin conexión | pendiente |
@@ -133,7 +133,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | Pruebas unitarias del cálculo (Vitest) | ✔ | 25 pruebas en verde |
 | Sin errores/avisos de consola | ✔ | 14 rutas verificadas tras A1 |
 | Capa de datos conectada (mismos hooks) | ✔ | A1 (build + consola OK) |
-| Tiempo real entre dos sesiones | pendiente | requiere proyecto Supabase real |
+| Tiempo real entre dos sesiones | ✔ | modo demo (BroadcastChannel) entre dos pestañas; Supabase real queda pendiente |
 | Animaciones ≥ 55 fps con CPU ×4 | pendiente | `npm run perf` |
 | Diseño sin cambios vs. Fase 1 | pendiente | capturas en el paso L |
 | APK firmado | pendiente | requiere Android SDK + keystore (tuyo) |
@@ -161,8 +161,15 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
    cuenta, hogar, invitar, unirme) se animan al entrar pero **no al salir**.
    Con `mode="wait"` el formulario se remontaba al terminar la animación y
    perdía lo escrito; con la clave por ruta se conserva el estado. Las
-   pestañas de la app sí usan `AnimatePresence` (fundido cruzado).
+   pestañas de la app usan `AnimatePresence` en `mode="wait"` (fundido rápido
+   y secuencial): el fundido cruzado (`popLayout`) dejaba dos pantallas en el
+   DOM a la vez.
 7. **Modo demostración real:** crear un hogar deja un hogar nuevo con una sola
    persona (nombre y color elegidos) y sin gastos; unirse agrega a la persona
    por nombre. Con `?dev=1` aparece «Restaurar ejemplo» para volver a los datos
    de la maqueta (146.48 / 201.41 / 183.61).
+8. **Gastos y sueldos ya guardan** (modo demo): el botón «Guardar» de las hojas
+   de gasto y de sueldo escribe en la capa de datos real (`useExpenseActions`,
+   `useIncomeActions`) y la caché se refresca; editar un gasto se ve al instante
+   en las otras pestañas. Se adelantó este cableado (previsto para el paso F)
+   porque sin él no se podía probar el tiempo real.

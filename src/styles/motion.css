@@ -308,6 +308,65 @@
   }
 }
 
+/* ---------- Inicio: barras que se llenan ---------- */
+.bar-fill {
+  transform-origin: left center;
+  animation: nido-bar-fill var(--dur-scene) var(--ease-cine) both;
+}
+
+@keyframes nido-bar-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Tarjetas y bloques de Inicio en cascada. */
+.home-stagger > * {
+  animation: nido-rise var(--dur-normal) var(--ease-cine) both;
+}
+
+.home-stagger > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.home-stagger > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.home-stagger > *:nth-child(3) {
+  animation-delay: 0.14s;
+}
+.home-stagger > *:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+/* Avatares que entran en cascada. */
+.avatar-stack .avatar {
+  animation: nido-avatar-in var(--dur-normal) var(--ease-cine) both;
+}
+
+.avatar-stack .avatar:nth-child(1) {
+  animation-delay: 0.12s;
+}
+.avatar-stack .avatar:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.avatar-stack .avatar:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@keyframes nido-avatar-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6) translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+}
+
 /* ---------- Menos movimiento: todo a fundidos de 120 ms ---------- */
 @media (prefers-reduced-motion: reduce) {
   .breathe,
@@ -317,12 +376,16 @@
   .sheen,
   .welcome-logo-sheen,
   .shake,
+  .avatar-stack .avatar,
   .skeleton::after {
     animation: none !important;
   }
 
+  .bar-fill,
+  .home-stagger > *,
   .rise {
-    animation: nido-fade 120ms linear both;
+    animation: nido-fade 120ms linear both !important;
+    animation-delay: 0s !important;
   }
 
   @keyframes nido-fade {
