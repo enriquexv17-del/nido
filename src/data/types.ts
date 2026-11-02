@@ -81,6 +81,54 @@ export interface RawActivity {
   at: string;
 }
 
+/* ---------------- Fase 3: ingresos extra, ahorros y metas ---------------- */
+
+/** Ingreso extra **personal** (marca de ropa, edición, etc.). No entra al reparto. */
+export interface RawOtherIncome {
+  id: string;
+  /** A quién pertenece (personal). */
+  memberId: string;
+  /** Mes en formato `YYYY-MM`. */
+  month: string;
+  /** Nombre del negocio o fuente («Marca de ropa», «Edición de video»). */
+  source: string;
+  /** Qué fue («Venta de 3 camisas»). */
+  note: string;
+  /** Cuánto se recibió (dólares). */
+  amount: number;
+  /** Día del mes (1–31), opcional. */
+  day?: number;
+  createdAt: string;
+}
+
+/** Cada cuánto se aparta para una meta. */
+export type SavingsFrequency = "daily" | "weekly" | "monthly";
+
+/** Meta de ahorro personal (objetivo + lo ahorrado hasta hoy). */
+export interface RawGoal {
+  id: string;
+  memberId: string;
+  name: string;
+  /** Monto objetivo. */
+  target: number;
+  /** Ahorrado hasta ahora. */
+  saved: number;
+  frequency: SavingsFrequency;
+  /** Mes límite `YYYY-MM` (opcional). */
+  dueMonth?: string;
+  createdAt: string;
+}
+
+/** Fondo de ahorro automático: un % de lo que sobra cada mes. */
+export interface RawFund {
+  id: string;
+  memberId: string;
+  name: string;
+  /** Porcentaje de lo disponible (0–100). */
+  pct: number;
+  note?: string;
+}
+
 export interface Household {
   id: string;
   name: string;
@@ -151,6 +199,12 @@ export interface Snapshot {
   incomes: RawIncome[];
   expenses: RawExpense[];
   activity: RawActivity[];
+  /** Ingresos extra personales (Fase 3). */
+  otherIncomes: RawOtherIncome[];
+  /** Metas de ahorro personales (Fase 3). */
+  goals: RawGoal[];
+  /** Fondos de ahorro automático (Fase 3). */
+  funds: RawFund[];
   /** Mes activo `YYYY-MM`. */
   month: string;
 }

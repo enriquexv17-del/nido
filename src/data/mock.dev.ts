@@ -6,7 +6,15 @@
  * pestañas con `BroadcastChannel` para simular el tiempo real de Supabase.
  */
 import { addMonths } from "../lib/month";
-import type { RawExpense, RawIncome, RawMember, Snapshot } from "./types";
+import type {
+  RawExpense,
+  RawFund,
+  RawGoal,
+  RawIncome,
+  RawMember,
+  RawOtherIncome,
+  Snapshot
+} from "./types";
 
 const ALL = ["enrique", "joaquin", "jefferson"];
 const M = "2026-11";
@@ -35,6 +43,27 @@ function monthExpenses(month: string): RawExpense[] {
 
 function income(memberId: string, month: string, gross: number, deductions: boolean): RawIncome {
   return { memberId, month, gross, afpOn: deductions, isssOn: deductions, isrOn: false };
+}
+
+/** Ingreso extra personal de ejemplo (Fase 3). */
+function extra(
+  id: string,
+  month: string,
+  source: string,
+  note: string,
+  amount: number,
+  day: number
+): RawOtherIncome {
+  return {
+    id,
+    memberId: "enrique",
+    month,
+    source,
+    note,
+    amount,
+    day,
+    createdAt: `${month}-01T00:00:00.000Z`
+  };
 }
 
 export const MOCK_SEED: Snapshot = {
@@ -69,6 +98,38 @@ export const MOCK_SEED: Snapshot = {
     { id: "a2", memberId: "jefferson", icon: "plus", text: "Jefferson agregó Agua", detail: "$14.00 · ayer", at: new Date().toISOString() },
     { id: "a3", memberId: "enrique", icon: "wallet", text: "Enrique anotó su sueldo", detail: "noviembre · lunes", at: new Date().toISOString() }
   ],
+  otherIncomes: [
+    extra("oi-m1", M, "Marca de ropa", "Venta de 3 camisas", 60, 12),
+    extra("oi-m2", M, "Edición de video", "Reel para cafetería", 45, 20),
+    extra("oi-p1", PREV, "Marca de ropa", "Pedido de gorras", 35, 8)
+  ],
+  goals: [
+    {
+      id: "g1",
+      memberId: "enrique",
+      name: "Teléfono nuevo",
+      target: 300,
+      saved: 90,
+      frequency: "monthly",
+      dueMonth: "2027-02",
+      createdAt: `${M}-01T00:00:00.000Z`
+    },
+    {
+      id: "g2",
+      memberId: "enrique",
+      name: "Fondo de emergencia",
+      target: 500,
+      saved: 120,
+      frequency: "monthly",
+      dueMonth: "2027-06",
+      createdAt: `${M}-01T00:00:00.000Z`
+    }
+  ],
+  funds: [
+    { id: "f1", memberId: "enrique", name: "Fondo de emergencia", pct: 40 },
+    { id: "f2", memberId: "enrique", name: "Seguro de vida", pct: 20 },
+    { id: "f3", memberId: "enrique", name: "Marca de ropa", pct: 40 }
+  ],
   month: M
 };
 
@@ -87,6 +148,20 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+/**
+ * Completa los campos de la Fase 3 (`otherIncomes`, `goals`, `funds`) cuando el
+ * snapshot viene de datos guardados antes de la actualización. Así no se pierde
+ * lo que el usuario ya tenía en el almacén local.
+ */
+function normalize(s: Snapshot): Snapshot {
+  return {
+    ...s,
+    otherIncomes: s.otherIncomes ?? [],
+    goals: s.goals ?? [],
+    funds: s.funds ?? []
+  };
+}
+
 /* ============================================================
    Almacén
    ============================================================ */
@@ -97,7 +172,7 @@ class MockStore {
   private channel: BroadcastChannel | null = null;
 
   constructor(seed: Snapshot) {
-    this.state = this.load() ?? clone(seed);
+    this.state = this.load() ?? normalize(clone(seed));
     if (typeof BroadcastChannel !== "undefined") {
       this.channel = new BroadcastChannel(CHANNEL);
       this.channel.onmessage = () => {
@@ -113,7 +188,7 @@ class MockStore {
   private load(): Snapshot | null {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as Snapshot) : null;
+      return raw ? normalize(JSON.parse(raw) as Snapshot) : null;
     } catch {
       return null;
     }
@@ -218,6 +293,70 @@ class MockStore {
     this.commit({ ...this.state, incomes: [...rest, ...nextTo] });
   }
 
+  /* ---------------- Otros ingresos (Fase 3) ---------------- */
+
+  addOtherIncome(input: Omit<RawOtherIncome, "id" | "createdAt">, actorName: string, actorId: string) {
+    const entry: RawOtherIncome = { ...input, id: uid(), createdAt: new Date().toISOString() };
+    let s: Snapshot = { ...this.state, otherIncomes: [...this.state.otherIncomes, entry] };
+    s = this.pushActivity(s, actorId, "plus", `${actorName} agregó ${entry.source}`, `$${entry.amount.toFixed(2)} · ahora`);
+    this.commit(s);
+  }
+
+  updateOtherIncome(id: string, patch: Partial<RawOtherIncome>, actorName: string, actorId: string) {
+    const current = this.state.otherIncomes.find((x) => x.id === id);
+    let s: Snapshot = {
+      ...this.state,
+      otherIncomes: this.state.otherIncomes.map((x) => (x.id === id ? { ...x, ...patch } : x))
+    };
+    if (current) {
+      const amount = patch.amount ?? current.amount;
+      s = this.pushActivity(s, actorId, "refresh", `${actorName} editó ${current.source}`, `$${amount.toFixed(2)} · ahora`);
+    }
+    this.commit(s);
+  }
+
+  deleteOtherIncome(id: string, actorName: string, actorId: string) {
+    const current = this.state.otherIncomes.find((x) => x.id === id);
+    let s: Snapshot = { ...this.state, otherIncomes: this.state.otherIncomes.filter((x) => x.id !== id) };
+    if (current) s = this.pushActivity(s, actorId, "wallet", `${actorName} eliminó ${current.source}`, "ahora");
+    this.commit(s);
+  }
+
+  /* ---------------- Metas de ahorro (Fase 3) ---------------- */
+
+  addGoal(input: Omit<RawGoal, "id" | "createdAt">) {
+    const goal: RawGoal = { ...input, id: uid(), createdAt: new Date().toISOString() };
+    this.commit({ ...this.state, goals: [...this.state.goals, goal] });
+  }
+
+  updateGoal(id: string, patch: Partial<RawGoal>) {
+    this.commit({
+      ...this.state,
+      goals: this.state.goals.map((g) => (g.id === id ? { ...g, ...patch } : g))
+    });
+  }
+
+  deleteGoal(id: string) {
+    this.commit({ ...this.state, goals: this.state.goals.filter((g) => g.id !== id) });
+  }
+
+  /* ---------------- Fondos de ahorro (Fase 3) ---------------- */
+
+  addFund(input: Omit<RawFund, "id">) {
+    this.commit({ ...this.state, funds: [...this.state.funds, { ...input, id: uid() }] });
+  }
+
+  updateFund(id: string, patch: Partial<RawFund>) {
+    this.commit({
+      ...this.state,
+      funds: this.state.funds.map((f) => (f.id === id ? { ...f, ...patch } : f))
+    });
+  }
+
+  deleteFund(id: string) {
+    this.commit({ ...this.state, funds: this.state.funds.filter((f) => f.id !== id) });
+  }
+
   /* ---------------- Integrantes ---------------- */
 
   addMember(name: string, color: string): RawMember | null {
@@ -241,7 +380,10 @@ class MockStore {
     const members = this.state.members.filter((m) => m.id !== id).map((m, i) => ({ ...m, position: i + 1 }));
     const expenses = this.state.expenses.map((e) => ({ ...e, memberIds: e.memberIds.filter((x) => x !== id) }));
     const incomes = this.state.incomes.filter((i) => i.memberId !== id);
-    this.commit({ ...this.state, members, expenses, incomes });
+    const otherIncomes = this.state.otherIncomes.filter((o) => o.memberId !== id);
+    const goals = this.state.goals.filter((g) => g.memberId !== id);
+    const funds = this.state.funds.filter((f) => f.memberId !== id);
+    this.commit({ ...this.state, members, expenses, incomes, otherIncomes, goals, funds });
   }
 
   private newCode(): string {
@@ -281,7 +423,10 @@ class MockStore {
       members: [member],
       incomes: [],
       expenses: [],
-      activity: []
+      activity: [],
+      otherIncomes: [],
+      goals: [],
+      funds: []
     });
     return this.state.household.id;
   }

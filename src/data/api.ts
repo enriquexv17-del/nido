@@ -123,6 +123,9 @@ async function loadRealSnapshot(month: string): Promise<Snapshot> {
     incomes,
     expenses,
     activity,
+    otherIncomes: [],
+    goals: [],
+    funds: [],
     month
   };
 }
