@@ -4,12 +4,21 @@
  * Todo el dinero se calcula en **centavos enteros** y los repartos se ajustan
  * con el **método del mayor resto** para que la suma siempre dé el total exacto.
  */
-import { TAX_SETTINGS, type TaxSettings } from "./settings";
+import { TAX_SETTINGS, lawDefaults, type Deduction, type TaxSettings } from "./settings";
 import { largestRemainder, round2, toCents } from "./money";
 import { balanceToIdeal, type BalanceRow } from "./balance";
 
 export { TAX_SETTINGS, ISR_BRACKETS_2025, TAX_SOURCE_NOTE } from "./settings";
 export type { TaxSettings, IsrBracket } from "./settings";
+export {
+  DEFAULT_DEDUCTIONS,
+  lawDefaults,
+} from "./settings";
+export type {
+  Deduction,
+  DeductionType,
+  DeductionBracket,
+} from "./settings";
 export { toCents, fromCents, round2, largestRemainder } from "./money";
 export { balanceToIdeal } from "./balance";
 export type { BalanceRow, BalanceResult } from "./balance";
@@ -95,6 +104,124 @@ export function calcNet(
   const netWeight = gross - afpExact - isssExact - isrExact;
 
   return { afp, isss, isr, net, netWeight };
+}
+
+/* ============================================================
+   Descuentos editables (Fase 4)
+   ============================================================ */
+
+/** Resultado de aplicar la lista de descuentos a un sueldo bruto. */
+export interface DeductionResult {
+  /** Monto descontado por id de definición (redondeado a centavos). */
+  byId: Record<string, number>;
+  /** AFP aplicado (0 si está apagada). */
+  afp: number;
+  /** ISSS aplicado (0 si está apagado). */
+  isss: number;
+  /** Renta aplicada (0 si está apagada). */
+  isr: number;
+  /** Total descontado (suma de los descuentos activos). */
+  total: number;
+  /** Neto redondeado a centavos. */
+  net: number;
+  /** Neto sin redondear, usado como peso del reparto. */
+  netWeight: number;
+}
+
+/** ¿Aplica este descuento para la persona, según sus banderas? */
+function deductionApplies(d: Deduction, flags: DeductionFlags): boolean {
+  if (!d.active) return false;
+  if (!d.isLaw) return true; // Los personalizados aplican a todos si están activos.
+  if (d.key === "afp") return flags.afpOn;
+  if (d.key === "isss") return flags.isssOn;
+  if (d.key === "isr") return flags.isrOn;
+  return false;
+}
+
+/** Monto exacto (sin redondear) de un descuento sobre el bruto. */
+function deductionAmount(
+  gross: number,
+  d: Deduction,
+  afp: number,
+  isss: number
+): number {
+  if (d.type === "percent") {
+    const base = d.maxBase != null ? Math.min(gross, d.maxBase) : gross;
+    let amount = base * d.value;
+    if (d.cap != null) amount = Math.min(amount, d.cap);
+    return amount;
+  }
+  if (d.type === "fixed") {
+    let amount = d.value;
+    if (d.cap != null) amount = Math.min(amount, d.cap);
+    return amount;
+  }
+  // Tabla progresiva: la base descuenta AFP e ISSS ya aplicados.
+  const base = Math.max(0, round2(gross - afp - isss));
+  const bracket = (d.brackets ?? []).find(
+    (b) => base >= b.from && (b.to === null || base <= b.to)
+  );
+  if (!bracket || bracket.rate === 0) return 0;
+  return bracket.fixed + (base - bracket.over) * bracket.rate;
+}
+
+/**
+ * Aplica una lista de descuentos (de ley y personalizados) a un sueldo bruto.
+ *
+ * Los descuentos de ley (AFP/ISSS/Renta) se controlan además con las banderas
+ * por persona; los personalizados aplican a todos cuando están activos. La
+ * Renta se calcula sobre `bruto − AFP − ISSS`.
+ *
+ * Con los valores por defecto devuelve exactamente lo mismo que `calcNet`.
+ */
+export function calcDeductions(
+  gross: number,
+  deductions: Deduction[],
+  flags: DeductionFlags
+): DeductionResult {
+  const ordered = [...deductions].sort((a, b) => a.order - b.order);
+  const byId: Record<string, number> = {};
+  let afp = 0;
+  let isss = 0;
+  let isr = 0;
+  let exactTotal = 0;
+
+  for (const d of ordered) {
+    if (!deductionApplies(d, flags)) {
+      byId[d.id] = 0;
+      continue;
+    }
+    const exact = deductionAmount(gross, d, afp, isss);
+    exactTotal += exact;
+    const rounded = round2(exact);
+    byId[d.id] = rounded;
+    if (d.key === "afp") afp = rounded;
+    else if (d.key === "isss") isss = rounded;
+    else if (d.key === "isr") isr = rounded;
+  }
+
+  const total = round2(Object.values(byId).reduce((sum, v) => sum + v, 0));
+  const net = round2(gross - total);
+  const netWeight = gross - exactTotal;
+
+  return { byId, afp, isss, isr, total, net, netWeight };
+}
+
+/**
+ * Restablece los valores de ley a sus cifras por defecto, conservando los
+ * descuentos personalizados y el estado encendido/apagado de cada uno.
+ */
+export function resetLawDeductions(current: Deduction[]): Deduction[] {
+  const customs = current.filter((d) => !d.isLaw);
+  const law = lawDefaults().map((def) => {
+    const cur = current.find(
+      (d) => d.isLaw && (d.id === def.id || (d.key != null && d.key === def.key))
+    );
+    return cur ? { ...def, active: cur.active } : def;
+  });
+  return [...law, ...customs]
+    .sort((a, b) => a.order - b.order)
+    .map((d) => ({ ...d }));
 }
 
 /* ============================================================

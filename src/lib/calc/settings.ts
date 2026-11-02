@@ -57,4 +57,98 @@ export const TAX_SETTINGS: TaxSettings = {
 };
 
 /** Nota que se muestra en la pantalla «Descuentos de ley». */
-export const TAX_SOURCE_NOTE = "Valores de referencia 2026.";
+export const TAX_SOURCE_NOTE = "Valores revisados en nov 2026; confirma con Hacienda o tu patrono.";
+
+/* ============================================================
+   Descuentos editables (Fase 4)
+   ============================================================ */
+
+/**
+ * Tipo de descuento:
+ * - `percent`: un porcentaje del bruto (con base máxima y/o tope opcionales).
+ * - `fixed`: un monto fijo mensual (préstamo, seguro privado, pensión...).
+ * - `bracket`: tabla progresiva por tramos (como la Renta).
+ */
+export type DeductionType = "percent" | "fixed" | "bracket";
+
+/** Un tramo de una tabla progresiva (comparte forma con `IsrBracket`). */
+export type DeductionBracket = IsrBracket;
+
+/** Descuento configurable del hogar (de ley o personalizado). */
+export interface Deduction {
+  id: string;
+  /** Clave estable para los descuentos de ley: `afp` | `isss` | `isr`. */
+  key?: string;
+  name: string;
+  type: DeductionType;
+  /** Tasa (0.0725 = 7.25 %) si es `percent`, o monto en dólares si es `fixed`. */
+  value: number;
+  /** Base máxima sobre la que se aplica el porcentaje (opcional). */
+  maxBase?: number;
+  /** Tope del descuento en dólares (opcional). */
+  cap?: number;
+  /** Si está encendido. */
+  active: boolean;
+  /** `true` para AFP/ISSS/Renta; `false` para los personalizados. */
+  isLaw: boolean;
+  /** Orden de cálculo (ascendente). */
+  order: number;
+  /** Tramos, solo para `type === "bracket"`. */
+  brackets?: DeductionBracket[];
+  /** Marca «verificar» (p. ej. el tope cotizable de la AFP). */
+  verify?: boolean;
+}
+
+/**
+ * Valores por defecto de los descuentos.
+ *
+ * AFP: 7.25 % con tope cotizable de $7,045.06 (marcado «verificar»).
+ * ISSS: 3 % con base máxima $1,000 → tope $30 al mes.
+ * Renta (ISR): tabla mensual del Decreto Ejecutivo No. 10 de 2025.
+ */
+export const DEFAULT_DEDUCTIONS: Deduction[] = [
+  {
+    id: "law-afp",
+    key: "afp",
+    name: "AFP · pensión",
+    type: "percent",
+    value: 0.0725,
+    maxBase: 7045.06,
+    active: true,
+    isLaw: true,
+    order: 1,
+    verify: true
+  },
+  {
+    id: "law-isss",
+    key: "isss",
+    name: "ISSS · seguro social",
+    type: "percent",
+    value: 0.03,
+    maxBase: 1000,
+    cap: 30,
+    active: true,
+    isLaw: true,
+    order: 2
+  },
+  {
+    id: "law-isr",
+    key: "isr",
+    name: "Renta (ISR)",
+    type: "bracket",
+    value: 0,
+    active: true,
+    isLaw: true,
+    order: 3,
+    brackets: ISR_BRACKETS_2025.map((b) => ({ ...b }))
+  }
+];
+
+/** Copia profunda de los descuentos de ley por defecto. */
+export function lawDefaults(): Deduction[] {
+  return DEFAULT_DEDUCTIONS.map((d) => ({
+    ...d,
+    brackets: d.brackets?.map((b) => ({ ...b }))
+  }));
+}
+
