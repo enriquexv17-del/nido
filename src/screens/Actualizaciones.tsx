@@ -4,7 +4,7 @@ import { Logo } from "../components/Icon";
 
 export function Actualizaciones() {
   return (
-    <div className="screen">
+    <div className="screen home-stagger">
       <BackHeader over="Nido para Android" title="Actualizaciones" />
 
       <div className="card update-card">
@@ -23,7 +23,7 @@ export function Actualizaciones() {
         </ul>
 
         <div className="progress">
-          <span style={{ width: "64%" }} />
+          <span style={{ transform: "scaleX(0.64)" }} />
         </div>
         <div className="progress-foot">
           <span>Descargando…</span>

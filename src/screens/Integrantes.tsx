@@ -36,7 +36,7 @@ export function Integrantes() {
   const full = people.length >= 3;
 
   return (
-    <div className="screen">
+    <div className="screen home-stagger">
       <BackHeader over={household.name} title="Integrantes" />
 
       <span className="full-pill">

@@ -23,7 +23,7 @@ const CARDS = [
 
 export function Descuentos() {
   return (
-    <div className="screen">
+    <div className="screen home-stagger">
       <BackHeader over="El Salvador" title="Descuentos de ley" />
 
       <p className="note note--blue">

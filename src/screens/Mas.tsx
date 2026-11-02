@@ -106,7 +106,7 @@ export function Mas() {
   }
 
   return (
-    <div className="screen">
+    <div className="screen home-stagger">
       <ScreenHeader title="Más" />
 
       <div className="card profile-card">
