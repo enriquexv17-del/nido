@@ -13,6 +13,14 @@ export type { TaxSettings, IsrBracket } from "./settings";
 export { toCents, fromCents, round2, largestRemainder } from "./money";
 export { balanceToIdeal } from "./balance";
 export type { BalanceRow, BalanceResult } from "./balance";
+export {
+  availableToSave,
+  distributeFunds,
+  goalProgress,
+  FREQUENCY_LABEL,
+  FREQUENCY_SHORT
+} from "./savings";
+export type { SavingsFrequency, FundSlice, GoalProgress } from "./savings";
 
 /* ============================================================
    Dinero

@@ -1,4 +1,5 @@
 /** Tipos del dominio de Nido (Fase 2). */
+import type { SavingsFrequency } from "../lib/calc";
 
 export type ExpenseIcon = "building" | "bolt" | "drop" | "wifi" | "utensils" | "wallet";
 
@@ -101,8 +102,8 @@ export interface RawOtherIncome {
   createdAt: string;
 }
 
-/** Cada cuánto se aparta para una meta. */
-export type SavingsFrequency = "daily" | "weekly" | "monthly";
+/** Cada cuánto se aparta para una meta (definido en el cálculo). */
+export type { SavingsFrequency };
 
 /** Meta de ahorro personal (objetivo + lo ahorrado hasta hoy). */
 export interface RawGoal {
