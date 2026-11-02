@@ -35,14 +35,16 @@ export type {
   Deduction,
   DeductionType,
   DeductionBracket,
-  PersonDeduction
+  PersonDeduction,
+  SplitConfig,
+  SplitMode
 } from "./types";
 
 export type { DerivedHousehold } from "./selectors";
 
 /* ---------------- Constantes ---------------- */
 
-export { EXPENSE_ICON_STYLE, COLOR_CHOICES, ICON_OPTIONS } from "./types";
+export { EXPENSE_ICON_STYLE, COLOR_CHOICES, ICON_OPTIONS, DEFAULT_SPLIT } from "./types";
 
 /* ---------------- Proveedores ---------------- */
 
@@ -64,6 +66,7 @@ export {
   useGoals,
   useFunds,
   useDeductions,
+  useSplit,
   useSavingSummary,
   useDataStatus,
   useRefresh,
@@ -85,6 +88,7 @@ export {
   useGoalActions,
   useFundActions,
   useDeductionActions,
+  useSplitActions,
   useHouseholdSetup
 } from "./mutations";
 

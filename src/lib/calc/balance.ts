@@ -77,7 +77,11 @@ function maxFlow(graph: Edge[][], source: number, sink: number): number {
   return flow;
 }
 
-export function balanceToIdeal(rows: BalanceRow[], memberIds: string[]): BalanceResult | null {
+export function balanceToIdeal(
+  rows: BalanceRow[],
+  memberIds: string[],
+  idealOverride?: Record<string, number>
+): BalanceResult | null {
   const grand = rows.reduce((sum, r) => sum + r.total, 0);
   if (rows.length === 0 || memberIds.length === 0) return null;
 
@@ -106,11 +110,23 @@ export function balanceToIdeal(rows: BalanceRow[], memberIds: string[]): Balance
   if (!usesAll) return null;
 
   // 2. Total ideal por persona (mayor resto sobre el total general).
-  const idealParts = largestRemainder(grand, memberIds.map((id) => exactTotal[id]));
-  const ideal: Record<string, number> = {};
-  memberIds.forEach((id, i) => {
-    ideal[id] = idealParts[i];
-  });
+  //    En los modos manual/fijo el ideal viene impuesto por la configuración.
+  let ideal: Record<string, number>;
+  if (idealOverride) {
+    ideal = {};
+    let sum = 0;
+    for (const id of memberIds) {
+      ideal[id] = idealOverride[id] ?? 0;
+      sum += ideal[id];
+    }
+    if (sum !== grand) return null;
+  } else {
+    const idealParts = largestRemainder(grand, memberIds.map((id) => exactTotal[id]));
+    ideal = {};
+    memberIds.forEach((id, i) => {
+      ideal[id] = idealParts[i];
+    });
+  }
 
   // 3. Déficits por fila y columna.
   const rowDeficit = rows.map((row, i) => {

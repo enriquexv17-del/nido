@@ -7,6 +7,7 @@
  */
 import { addMonths } from "../lib/month";
 import { lawDefaults } from "../lib/calc";
+import { DEFAULT_SPLIT } from "./types";
 import type {
   Deduction,
   RawExpense,
@@ -15,7 +16,8 @@ import type {
   RawIncome,
   RawMember,
   RawOtherIncome,
-  Snapshot
+  Snapshot,
+  SplitConfig
 } from "./types";
 
 const ALL = ["enrique", "joaquin", "jefferson"];
@@ -133,6 +135,7 @@ export const MOCK_SEED: Snapshot = {
     { id: "f3", memberId: "enrique", name: "Marca de ropa", pct: 40 }
   ],
   deductions: lawDefaults(),
+  split: { ...DEFAULT_SPLIT },
   month: M
 };
 
@@ -162,7 +165,8 @@ function normalize(s: Snapshot): Snapshot {
     otherIncomes: s.otherIncomes ?? [],
     goals: s.goals ?? [],
     funds: s.funds ?? [],
-    deductions: s.deductions?.length ? s.deductions : lawDefaults()
+    deductions: s.deductions?.length ? s.deductions : lawDefaults(),
+    split: s.split ?? { ...DEFAULT_SPLIT }
   };
 }
 
@@ -383,6 +387,10 @@ class MockStore {
     this.commit({ ...this.state, deductions });
   }
 
+  setSplit(split: SplitConfig) {
+    this.commit({ ...this.state, split });
+  }
+
   /* ---------------- Integrantes ---------------- */
 
   addMember(name: string, color: string): RawMember | null {
@@ -453,7 +461,8 @@ class MockStore {
       otherIncomes: [],
       goals: [],
       funds: [],
-      deductions: lawDefaults()
+      deductions: lawDefaults(),
+      split: { ...DEFAULT_SPLIT }
     });
     return this.state.household.id;
   }

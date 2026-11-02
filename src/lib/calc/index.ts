@@ -252,7 +252,7 @@ export function expenseMonthlyCents(e: CalcExpense): number {
   return toCents(e.amount);
 }
 
-export type SplitMode = "salary" | "equal";
+export type SplitMode = "salary" | "equal" | "manual" | "fixed";
 
 export interface ExpenseShare {
   expenseId: string;
@@ -276,18 +276,24 @@ export interface ShareResult {
  *   total general). Si la participación lo hace imposible, cae al reparto por
  *   gasto.
  * - `equal`: reparto por gasto en partes iguales.
+ * - `manual`: reparto proporcional a los porcentajes de `customWeights`.
+ * - `fixed`: reparto proporcional a los montos fijos de `customWeights`.
  *
  * En todos los casos cada gasto suma exactamente su total.
  */
 export function calcShares(
   expenses: CalcExpense[],
   members: CalcMember[],
-  mode: SplitMode = "salary"
+  mode: SplitMode = "salary",
+  customWeights?: Record<string, number>
 ): ShareResult {
   const weightOf = new Map(members.map((m) => [m.id, m.netWeight]));
   const byExpense: Record<string, Record<string, number>> = {};
   const byMember: Record<string, number> = {};
   for (const m of members) byMember[m.id] = 0;
+
+  const useCustom = mode === "manual" || mode === "fixed";
+  const customOf = (id: string) => Math.max(0, customWeights?.[id] ?? 0);
 
   let totalCents = 0;
 
@@ -301,7 +307,9 @@ export function calcShares(
       const weights =
         mode === "equal"
           ? participants.map(() => 1)
-          : participants.map((id) => weightOf.get(id)!);
+          : useCustom
+            ? participants.map(customOf)
+            : participants.map((id) => weightOf.get(id)!);
       const parts = largestRemainder(total, weights);
       participants.forEach((id, i) => {
         amounts[id] = parts[i];
@@ -310,19 +318,33 @@ export function calcShares(
     byExpense[e.id] = amounts;
   }
 
-  // «Según sueldo»: intenta el reparto con doble restricción.
-  if (mode === "salary") {
+  // «Según sueldo», «manual» y «fijo»: intenta el reparto con doble restricción.
+  if (mode === "salary" || useCustom) {
     const rows: BalanceRow[] = expenses.map((e) => ({
       id: e.id,
       total: expenseMonthlyCents(e),
       participants: e.memberIds
         .filter((id) => weightOf.has(id))
-        .map((id) => ({ id, weight: weightOf.get(id)! }))
+        .map((id) => ({
+          id,
+          weight: useCustom ? customOf(id) : weightOf.get(id)!
+        }))
     }));
-    const balanced = balanceToIdeal(
-      rows,
-      members.map((m) => m.id)
-    );
+
+    const memberIds = members.map((m) => m.id);
+    let idealOverride: Record<string, number> | undefined;
+    if (useCustom) {
+      const weights = memberIds.map(customOf);
+      if (weights.some((w) => w > 0)) {
+        const idealParts = largestRemainder(totalCents, weights);
+        idealOverride = {};
+        memberIds.forEach((id, i) => {
+          idealOverride![id] = idealParts[i];
+        });
+      }
+    }
+
+    const balanced = balanceToIdeal(rows, memberIds, idealOverride);
     if (balanced) {
       return { byExpense: balanced.byExpense, byMember: balanced.byMember, totalCents };
     }

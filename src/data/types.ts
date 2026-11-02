@@ -1,7 +1,12 @@
 /** Tipos del dominio de Nido (Fase 2). */
-import type { Deduction, SavingsFrequency } from "../lib/calc";
+import type { Deduction, SavingsFrequency, SplitMode } from "../lib/calc";
 
-export type { Deduction, DeductionType, DeductionBracket } from "../lib/calc";
+export type {
+  Deduction,
+  DeductionType,
+  DeductionBracket,
+  SplitMode
+} from "../lib/calc";
 
 export type ExpenseIcon = "building" | "bolt" | "drop" | "wifi" | "utensils" | "wallet";
 
@@ -132,6 +137,25 @@ export interface RawFund {
   note?: string;
 }
 
+/* ---------------- Fase 4: cómo se reparte ---------------- */
+
+/**
+ * Configuración del reparto del hogar:
+ * - `salary`: proporcional al sueldo neto (por defecto).
+ * - `equal`: partes iguales.
+ * - `manual`: porcentajes por integrante (deben sumar 100).
+ * - `fixed`: monto fijo por integrante.
+ */
+export interface SplitConfig {
+  mode: SplitMode;
+  /** Porcentajes manuales (0–100) por integrante. */
+  manual: Record<string, number>;
+  /** Montos fijos en dólares por integrante. */
+  fixed: Record<string, number>;
+}
+
+export const DEFAULT_SPLIT: SplitConfig = { mode: "salary", manual: {}, fixed: {} };
+
 export interface Household {
   id: string;
   name: string;
@@ -223,6 +247,8 @@ export interface Snapshot {
   funds: RawFund[];
   /** Descuentos configurables del hogar (Fase 4). */
   deductions: Deduction[];
+  /** Cómo se reparten los gastos (Fase 4). */
+  split: SplitConfig;
   /** Mes activo `YYYY-MM`. */
   month: string;
 }

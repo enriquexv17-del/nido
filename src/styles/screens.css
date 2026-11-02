@@ -1533,6 +1533,77 @@ button.settings-row {
   border-color: var(--anil);
 }
 
+/* ---------- Cómo se reparte (Fase 4) ---------- */
+.split-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.split-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.split-edit-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.split-input {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--soft);
+  border-radius: 10px;
+  padding: 6px 9px;
+  flex: none;
+}
+
+.split-input span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.split-input input {
+  width: 68px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  outline: none;
+}
+
+.split-warn {
+  color: var(--coral);
+  font-weight: 600;
+}
+
+.split-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.split-preview-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--anil);
+  background: var(--anil-l);
+  border-radius: 8px;
+  padding: 3px 8px;
+  flex: none;
+}
+
 /* ---------- Actualizaciones ---------- */
 .update-head {
   display: flex;

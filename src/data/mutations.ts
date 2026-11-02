@@ -7,7 +7,7 @@ import { useAuth } from "./auth";
 import { useDataContext } from "./provider";
 import { useDerived } from "./queries";
 import type { Actor } from "./api";
-import type { Deduction } from "./types";
+import type { Deduction, SplitConfig } from "./types";
 
 function useActor(): Actor {
   const { user } = useAuth();
@@ -237,6 +237,18 @@ export function useDeductionActions() {
     resetLawValues: reset.mutateAsync,
     isSaving: create.isPending || update.isPending || remove.isPending || reset.isPending
   };
+}
+
+/**
+ * Guarda la configuración de reparto del hogar.
+ */
+export function useSplitActions() {
+  const invalidate = useInvalidate();
+  const save = useMutation({
+    mutationFn: (split: SplitConfig) => api.saveSplit(split),
+    onSuccess: invalidate
+  });
+  return { saveSplit: save.mutateAsync, isSaving: save.isPending };
 }
 
 /**

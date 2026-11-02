@@ -4,18 +4,17 @@ import { Avatar } from "../components/Avatar";
 import { IconSquare } from "../components/IconSquare";
 import { CountUp } from "../components/CountUp";
 import { formatPct, formatUSD } from "../lib/format";
-import { useExpenses, usePeopleMode } from "../data";
+import { useExpenses, usePeopleMode, useSplit, type SplitConfig } from "../data";
 import { useSession } from "../lib/session";
-
-type Mode = "salary" | "equal";
 
 export function RepartoDetalle() {
   const expenses = useExpenses();
   const { person: you } = useSession();
   const location = useLocation();
-  const mode: Mode =
-    (location.state as { mode?: Mode } | null)?.mode === "equal" ? "equal" : "salary";
-  const people = usePeopleMode(mode);
+  const stateSplit = (location.state as { split?: SplitConfig } | null)?.split;
+  const persisted = useSplit();
+  const split = stateSplit ?? persisted;
+  const people = usePeopleMode(split);
   const person = people.find((p) => p.id === you.id) ?? you;
 
   return (
@@ -32,7 +31,7 @@ export function RepartoDetalle() {
         </div>
       </div>
 
-      <div className="card detalle-list stagger-list" key={mode}>
+      <div className="card detalle-list stagger-list" key={split.mode}>
         {expenses.map((e) => {
           const mine = person.shareByExpense.find((s) => s.expenseId === e.id)?.amount ?? 0;
           return (

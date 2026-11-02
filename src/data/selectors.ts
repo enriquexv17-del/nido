@@ -11,12 +11,14 @@ import {
 } from "../lib/calc";
 import { monthLabel } from "../lib/month";
 import {
+  DEFAULT_SPLIT,
   EXPENSE_ICON_STYLE,
   type Activity,
   type Expense,
   type Household,
   type Person,
-  type Snapshot
+  type Snapshot,
+  type SplitConfig
 } from "./types";
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -43,9 +45,12 @@ const deriveCache = new WeakMap<Snapshot, Map<string, DerivedHousehold>>();
 export function derive(
   snapshot: Snapshot,
   isYouId: string | null,
-  mode: "salary" | "equal" = "salary"
+  override?: SplitConfig
 ): DerivedHousehold {
-  const key = `${isYouId ?? "\u0000"}|${mode}`;
+  const split = override ?? snapshot.split ?? DEFAULT_SPLIT;
+  const key = `${isYouId ?? "\u0000"}|${split.mode}|${JSON.stringify(
+    split.manual
+  )}|${JSON.stringify(split.fixed)}`;
   let byKey = deriveCache.get(snapshot);
   if (!byKey) {
     byKey = new Map();
@@ -53,7 +58,7 @@ export function derive(
   }
   const cached = byKey.get(key);
   if (cached) return cached;
-  const result = computeDerived(snapshot, isYouId, mode);
+  const result = computeDerived(snapshot, isYouId, split);
   byKey.set(key, result);
   return result;
 }
@@ -61,9 +66,11 @@ export function derive(
 function computeDerived(
   snapshot: Snapshot,
   isYouId: string | null,
-  mode: "salary" | "equal"
+  split: SplitConfig
 ): DerivedHousehold {
   const month = snapshot.month;
+  const mode = split.mode;
+  const weights = mode === "manual" ? split.manual : mode === "fixed" ? split.fixed : undefined;
   const expenses = snapshot.expenses.filter((e) => e.month === month);
 
   const incomeOf = (memberId: string) =>
@@ -103,7 +110,8 @@ function computeDerived(
   const shares = calcShares(
     calcExpenses,
     snapshot.members.map((m) => ({ id: m.id, netWeight: netOf.get(m.id)?.net ?? 0 })),
-    mode
+    mode,
+    weights
   );
 
   const totalNetCents = snapshot.members.reduce(

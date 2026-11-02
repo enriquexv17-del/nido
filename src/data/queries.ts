@@ -20,8 +20,10 @@ import type {
   RawFund,
   RawGoal,
   RawOtherIncome,
-  Snapshot
+  Snapshot,
+  SplitConfig
 } from "./types";
+import { DEFAULT_SPLIT } from "./types";
 
 const EMPTY_HOUSEHOLD: Household = {
   id: "",
@@ -98,17 +100,22 @@ export function usePeople(): Person[] {
 }
 
 /**
- * Personas con el reparto calculado en el modo indicado. Permite que la
- * pantalla de Reparto recuente con el cálculo real al alternar
- * «Según sueldo» / «Partes iguales».
+ * Personas con el reparto calculado en la configuración indicada (o en la
+ * guardada). Permite previsualizar un reparto antes de guardarlo.
  */
-export function usePeopleMode(mode: "salary" | "equal"): Person[] {
+export function usePeopleMode(split?: SplitConfig): Person[] {
   const query = useSnapshot();
   const isYouId = useIsYouId(query.data);
   return useMemo(
-    () => (query.data ? derive(query.data, isYouId, mode).people : []),
-    [query.data, isYouId, mode]
+    () => (query.data ? derive(query.data, isYouId, split).people : []),
+    [query.data, isYouId, split]
   );
+}
+
+/** Configuración de reparto guardada del hogar. */
+export function useSplit(): SplitConfig {
+  const snapshot = useSnapshot().data;
+  return useMemo(() => snapshot?.split ?? DEFAULT_SPLIT, [snapshot]);
 }
 
 export function useExpenses(): Expense[] {

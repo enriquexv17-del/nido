@@ -19,8 +19,10 @@ import type {
   RawMember,
   RawOtherIncome,
   SavingsFrequency,
-  Snapshot
+  Snapshot,
+  SplitConfig
 } from "./types";
+import { DEFAULT_SPLIT } from "./types";
 
 export const DATA_MODE: "supabase" | "demo" = isSupabaseConfigured ? "supabase" : "demo";
 
@@ -183,6 +185,17 @@ async function loadRealSnapshot(month: string): Promise<Snapshot> {
       }))
     : lawDefaults();
 
+  const splitMode = str(h.split_mode);
+  const split: SplitConfig = {
+    mode: (["salary", "equal", "manual", "fixed"] as const).includes(
+      splitMode as SplitConfig["mode"]
+    )
+      ? (splitMode as SplitConfig["mode"])
+      : DEFAULT_SPLIT.mode,
+    manual: (h.split_manual as Record<string, number> | null) ?? {},
+    fixed: (h.split_fixed as Record<string, number> | null) ?? {}
+  };
+
   return {
     household: {
       id: householdId,
@@ -201,6 +214,7 @@ async function loadRealSnapshot(month: string): Promise<Snapshot> {
     goals,
     funds,
     deductions,
+    split,
     month
   };
 }
@@ -610,6 +624,25 @@ export async function resetLawValues(current: Deduction[]): Promise<Deduction[]>
     if (error) throw error;
   }
   return next;
+}
+
+/* ---------------- Fase 4: cómo se reparte ---------------- */
+
+export async function saveSplit(split: SplitConfig): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().setSplit(split);
+    return;
+  }
+  const householdId = await getHouseholdId();
+  const { error } = await supabase
+    .from("households")
+    .update({
+      split_mode: split.mode,
+      split_manual: split.manual,
+      split_fixed: split.fixed
+    })
+    .eq("id", householdId);
+  if (error) throw error;
 }
 
 /* ---------------- Hogares ---------------- */
