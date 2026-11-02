@@ -37,11 +37,13 @@ export function Dialog({ open, onClose, children }: DialogProps) {
 export function ConfirmDelete({
   open,
   name,
-  onClose
+  onClose,
+  onConfirm
 }: {
   open: boolean;
   name: string;
   onClose: () => void;
+  onConfirm?: () => void;
 }) {
   return (
     <Dialog open={open} onClose={onClose}>
@@ -56,7 +58,7 @@ export function ConfirmDelete({
         <Button variant="ghost" onClick={onClose}>
           Cancelar
         </Button>
-        <Button variant="coral" onClick={onClose}>
+        <Button variant="coral" onClick={onConfirm ?? onClose}>
           Eliminar
         </Button>
       </div>

@@ -70,6 +70,8 @@ export {
 
 export { previewHousehold } from "./api";
 
+export type { ExpenseInput } from "./api";
+
 export { derive };
 
 /* ---------------- Ayudas ---------------- */

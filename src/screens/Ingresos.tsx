@@ -8,7 +8,7 @@ import { Field } from "../components/Field";
 import { Switch } from "../components/Switch";
 import { Button } from "../components/Button";
 import { formatUSD, formatUSDPlain } from "../lib/format";
-import { useHousehold, useMonths, usePeople, type Person } from "../data";
+import { useHousehold, useIncomeActions, useMonths, usePeople, type Person } from "../data";
 
 export function Ingresos() {
   const household = useHousehold();
@@ -82,6 +82,7 @@ export function Ingresos() {
 }
 
 function SalarySheet({ person, onClose }: { person: Person; onClose: () => void }) {
+  const { saveIncome, isSaving } = useIncomeActions();
   const [gross, setGross] = useState(person.gross.toFixed(2));
   const [afpOn, setAfpOn] = useState(person.afpOn);
   const [isssOn, setIsssOn] = useState(person.isssOn);
@@ -90,14 +91,25 @@ function SalarySheet({ person, onClose }: { person: Person; onClose: () => void 
   const net = person.net;
   const noDeductions = !person.afpOn && !person.isssOn;
 
+  async function onSave() {
+    await saveIncome({
+      memberId: person.id,
+      gross: Number.parseFloat(gross) || 0,
+      afpOn,
+      isssOn,
+      isrOn
+    });
+    onClose();
+  }
+
   return (
     <Sheet
       open
       onClose={onClose}
       title="Sueldo de noviembre"
       footer={
-        <Button block onClick={onClose}>
-          Guardar sueldo
+        <Button block onClick={onSave} disabled={isSaving}>
+          {isSaving ? "Guardando..." : "Guardar sueldo"}
         </Button>
       }
     >

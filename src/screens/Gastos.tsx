@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { ScreenHeader } from "../components/ScreenHeader";
 import { ExpenseRow } from "../components/ExpenseRow";
 import { Button } from "../components/Button";
@@ -11,11 +11,13 @@ import { Avatar } from "../components/Avatar";
 import { formatUSD } from "../lib/format";
 import {
   EXPENSE_ICON_STYLE,
+  useExpenseActions,
   useExpenses,
   useHousehold,
   usePeople,
   type Expense,
   type ExpenseIcon,
+  type ExpenseInput,
   type ExpenseType
 } from "../data";
 
@@ -32,10 +34,31 @@ export function Gastos() {
   const household = useHousehold();
   const expenses = useExpenses();
   const people = usePeople();
+  const { createExpense, updateExpense, deleteExpense, isSaving } = useExpenseActions();
 
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [deleting, setDeleting] = useState<Expense | null>(null);
+
+  const createRef = useRef<ExpenseFormHandle>(null);
+  const editRef = useRef<ExpenseFormHandle>(null);
+
+  async function onCreate(input: ExpenseInput) {
+    await createExpense(input);
+    setCreating(false);
+  }
+
+  async function onUpdate(input: ExpenseInput) {
+    if (!editing) return;
+    await updateExpense({ id: editing.id, patch: input });
+    setEditing(null);
+  }
+
+  async function onDelete() {
+    const target = deleting;
+    setDeleting(null);
+    if (target) await deleteExpense(target.id);
+  }
 
   return (
     <div className="screen">
@@ -73,12 +96,12 @@ export function Gastos() {
         onClose={() => setCreating(false)}
         title="Nuevo gasto"
         footer={
-          <Button block onClick={() => setCreating(false)}>
-            Guardar gasto
+          <Button block onClick={() => createRef.current?.submit()} disabled={isSaving}>
+            {isSaving ? "Guardando..." : "Guardar gasto"}
           </Button>
         }
       >
-        <ExpenseForm people={people} />
+        <ExpenseForm ref={createRef} people={people} onSubmit={onCreate} />
       </Sheet>
 
       <Sheet
@@ -86,29 +109,49 @@ export function Gastos() {
         onClose={() => setEditing(null)}
         title="Editar gasto"
         footer={
-          <Button block onClick={() => setEditing(null)}>
-            Guardar cambios
+          <Button block onClick={() => editRef.current?.submit()} disabled={isSaving}>
+            {isSaving ? "Guardando..." : "Guardar cambios"}
           </Button>
         }
       >
-        {editing ? <ExpenseForm people={people} initial={editing} /> : null}
+        {editing ? (
+          <ExpenseForm
+            ref={editRef}
+            key={editing.id}
+            people={people}
+            initial={editing}
+            onSubmit={onUpdate}
+          />
+        ) : null}
       </Sheet>
 
       <ConfirmDelete
         open={deleting !== null}
         name={deleting?.name ?? ""}
         onClose={() => setDeleting(null)}
+        onConfirm={onDelete}
       />
     </div>
   );
 }
 
-function ExpenseForm({ people, initial }: { people: ReturnType<typeof usePeople>; initial?: Expense }) {
+export interface ExpenseFormHandle {
+  submit: () => void;
+}
+
+const ExpenseForm = forwardRef<
+  ExpenseFormHandle,
+  {
+    people: ReturnType<typeof usePeople>;
+    initial?: Expense;
+    onSubmit: (input: ExpenseInput) => void | Promise<void>;
+  }
+>(function ExpenseForm({ people, initial, onSubmit }, ref) {
   const [name, setName] = useState(initial?.name ?? "Comida diaria");
   const [amount, setAmount] = useState((initial?.perDay ?? initial?.amount ?? 6).toFixed(2));
   const [type, setType] = useState<ExpenseType>(initial?.type ?? "daily");
   const [icon, setIcon] = useState<ExpenseIcon>(initial?.icon ?? "utensils");
-  const [shared, setShared] = useState<string[]>(people.map((p) => p.id));
+  const [shared, setShared] = useState<string[]>(initial?.memberIds ?? people.map((p) => p.id));
 
   const perDay = Number.parseFloat(amount) || 0;
 
@@ -116,6 +159,25 @@ function ExpenseForm({ people, initial }: { people: ReturnType<typeof usePeople>
     setShared((current) =>
       current.includes(id) ? current.filter((x) => x !== id) : [...current, id]
     );
+
+  function submit() {
+    const value = Number.parseFloat(amount) || 0;
+    const ids = shared.length > 0 ? shared : people.map((p) => p.id);
+    const base: ExpenseInput = {
+      name: name.trim() || "Gasto",
+      icon,
+      type,
+      amount: type === "daily" ? value * 30 : value,
+      memberIds: ids
+    };
+    if (type === "daily") {
+      base.perDay = value;
+      base.days = 30;
+    }
+    void onSubmit(base);
+  }
+
+  useImperativeHandle(ref, () => ({ submit }));
 
   return (
     <div className="expense-form">
@@ -205,4 +267,6 @@ function ExpenseForm({ people, initial }: { people: ReturnType<typeof usePeople>
       </div>
     </div>
   );
-}
+});
+
+export { ExpenseForm };
