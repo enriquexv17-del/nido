@@ -54,6 +54,14 @@
   /* Medidas de layout */
   --tap: 48px;
   --pad: 16px;
+
+  /* Movimiento */
+  --ease-cine: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.4, 0, 1, 1);
+  --dur-micro: 160ms;
+  --dur-normal: 320ms;
+  --dur-scene: 600ms;
+  --stagger: 50ms;
 }
 
 @media (prefers-reduced-motion: reduce) {

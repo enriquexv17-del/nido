@@ -1,0 +1,209 @@
+/* ============================================================
+   Nido · movimiento (CSS puro)
+   Solo transform/opacity. Respeta prefers-reduced-motion.
+   ============================================================ */
+
+/* ---------- Esqueleto de carga (shimmer por transform) ---------- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--soft);
+  border-radius: 12px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    transparent 100%
+  );
+  animation: nido-shimmer 1.25s var(--ease-cine) infinite;
+  will-change: transform;
+}
+
+@keyframes nido-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 8px;
+}
+
+.skeleton-line--sm {
+  height: 9px;
+  width: 45%;
+}
+
+.skeleton-card {
+  background: #fff;
+  border-radius: var(--r-card);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.skeleton-square {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  flex: none;
+}
+
+.skeleton-stack {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------- Respiración sutil del botón flotante ---------- */
+.breathe {
+  animation: nido-breathe 3.2s var(--ease-cine) infinite;
+  will-change: transform;
+}
+
+@keyframes nido-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
+
+/* ---------- Brillo ambiental lento (hero, bienvenida) ---------- */
+.glow {
+  animation: nido-glow 9s var(--ease-cine) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes nido-glow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(2%, -2%, 0) scale(1.08);
+    opacity: 0.8;
+  }
+}
+
+/* ---------- Deriva lenta de círculos decorativos ---------- */
+.drift {
+  animation: nido-drift 14s ease-in-out infinite;
+  will-change: transform;
+}
+
+.drift--slow {
+  animation-duration: 20s;
+  animation-direction: reverse;
+}
+
+@keyframes nido-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+/* ---------- Destello que recorre el arco maíz ---------- */
+.sheen {
+  animation: nido-sheen 3.6s var(--ease-cine) 1.1s infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes nido-sheen {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.9;
+  }
+  55% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+/* ---------- Temblor de atención (ícono de basura) ---------- */
+.shake {
+  animation: nido-shake 0.5s var(--ease-cine) 1;
+}
+
+@keyframes nido-shake {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-9deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+  75% {
+    transform: rotate(-4deg);
+  }
+}
+
+/* ---------- Aparición en cascada por CSS (listas simples) ---------- */
+.rise {
+  animation: nido-rise var(--dur-normal) var(--ease-cine) both;
+}
+
+@keyframes nido-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Menos movimiento: todo a fundidos de 120 ms ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .breathe,
+  .glow,
+  .drift,
+  .drift--slow,
+  .sheen,
+  .shake,
+  .skeleton::after {
+    animation: none !important;
+  }
+
+  .rise {
+    animation: nido-fade 120ms linear both;
+  }
+
+  @keyframes nido-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
