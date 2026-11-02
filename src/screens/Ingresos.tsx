@@ -7,7 +7,9 @@ import { Sheet } from "../components/Sheet";
 import { Field } from "../components/Field";
 import { Switch } from "../components/Switch";
 import { Button } from "../components/Button";
+import { CountUp } from "../components/CountUp";
 import { formatUSD, formatUSDPlain } from "../lib/format";
+import { calcNet } from "../lib/calc";
 import { useHousehold, useIncomeActions, useMonths, usePeople, type Person } from "../data";
 
 export function Ingresos() {
@@ -36,10 +38,12 @@ export function Ingresos() {
 
       <div className="dark-card income-total">
         <span className="dark-card-label">Neto del hogar en noviembre</span>
-        <span className="dark-card-value">{formatUSD(household.totalNet)}</span>
+        <span className="dark-card-value">
+          <CountUp value={household.totalNet} format={formatUSD} />
+        </span>
       </div>
 
-      <div className="income-list">
+      <div className="income-list stagger-list">
         {people.map((p) => {
           const hasDeductions = p.afpOn || p.isssOn;
           return (
@@ -54,7 +58,9 @@ export function Ingresos() {
                   <span className="income-gross">Sueldo {formatUSD(p.gross)}</span>
                 </div>
                 <div className="income-net">
-                  <span className="income-net-value">{formatUSD(p.net)}</span>
+                  <span className="income-net-value">
+                    <CountUp value={p.net} format={formatUSD} />
+                  </span>
                   <span className="income-net-label">neto</span>
                 </div>
                 <button
@@ -88,8 +94,9 @@ function SalarySheet({ person, onClose }: { person: Person; onClose: () => void 
   const [isssOn, setIsssOn] = useState(person.isssOn);
   const [isrOn, setIsrOn] = useState(person.isrOn);
 
-  const net = person.net;
-  const noDeductions = !person.afpOn && !person.isssOn;
+  const grossNum = Number.parseFloat(gross) || 0;
+  const ded = calcNet(grossNum, { afpOn, isssOn, isrOn });
+  const noDeductions = !afpOn && !isssOn;
 
   async function onSave() {
     await saveIncome({
@@ -129,7 +136,7 @@ function SalarySheet({ person, onClose }: { person: Person; onClose: () => void 
             <span className="deduction-sub">Pensión</span>
           </div>
           <span className="deduction-amount">
-            {person.afpOn ? `\u2212${formatUSDPlain(person.afp)}` : "—"}
+            {afpOn ? `\u2212${formatUSDPlain(ded.afp)}` : "—"}
           </span>
           <Switch checked={afpOn} onChange={setAfpOn} label="AFP" />
         </div>
@@ -140,7 +147,7 @@ function SalarySheet({ person, onClose }: { person: Person; onClose: () => void 
             <span className="deduction-sub">Salud · tope $30</span>
           </div>
           <span className="deduction-amount">
-            {person.isssOn ? `\u2212${formatUSDPlain(person.isss)}` : "—"}
+            {isssOn ? `\u2212${formatUSDPlain(ded.isss)}` : "—"}
           </span>
           <Switch checked={isssOn} onChange={setIsssOn} label="ISSS" />
         </div>
@@ -157,7 +164,9 @@ function SalarySheet({ person, onClose }: { person: Person; onClose: () => void 
 
       <div className="receive-box">
         <span>Recibirás</span>
-        <strong>{formatUSD(net)}</strong>
+        <strong>
+          <CountUp value={ded.net} format={formatUSD} />
+        </strong>
       </div>
 
       <p className="sheet-hint">

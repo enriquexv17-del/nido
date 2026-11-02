@@ -367,6 +367,43 @@
   }
 }
 
+/* ---------- Listas en cascada (genérico) ---------- */
+.stagger-list > * {
+  animation: nido-rise var(--dur-normal) var(--ease-cine) both;
+}
+
+.stagger-list > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.stagger-list > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.stagger-list > *:nth-child(3) {
+  animation-delay: 0.14s;
+}
+.stagger-list > *:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+/* ---------- Gesto de deslizar filas (Gastos) ---------- */
+.expense-row-body {
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.expense-row-body.is-dragging {
+  cursor: grabbing;
+}
+
+/* Botón flotante: respira y su «+» gira a «×» al abrir la hoja. */
+.fab svg {
+  transition: transform var(--dur-normal) var(--ease-cine);
+}
+
+.fab.is-open svg {
+  transform: rotate(45deg);
+}
+
 /* ---------- Menos movimiento: todo a fundidos de 120 ms ---------- */
 @media (prefers-reduced-motion: reduce) {
   .breathe,
@@ -383,6 +420,7 @@
 
   .bar-fill,
   .home-stagger > *,
+  .stagger-list > *,
   .rise {
     animation: nido-fade 120ms linear both !important;
     animation-delay: 0s !important;
