@@ -22,6 +22,7 @@ testeo.
 | 11 | `..._rpc_households.sql` | `create_household`, `preview_household`, `join_household`. |
 | 12 | `..._rpc_misc.sql` | `regenerate_code`, `copy_month`, `delete_my_account`. |
 | 13 | `..._realtime.sql` | Publicación Realtime de las tablas. |
+| 14 | `..._savings.sql` | `other_incomes`, `savings_goals`, `savings_funds` (personales) y su RLS. |
 
 ## Cómo aplicarlas (etapa posterior)
 
@@ -43,6 +44,7 @@ modo demostración y usa el proyecto real.
 - RLS activa en todas las tablas: cada quien ve y toca solo su hogar.
 - Sueldos: los ve el hogar; los edita su dueño (o quien administra).
 - Gastos: los edita cualquier integrante del hogar.
+- Ingresos extra, metas y fondos: **personales**; cada quien ve y edita solo los suyos.
 - Las funciones que necesitan escribir fuera de RLS corren como
   `security definer` (crear/unirse a hogar, copiar mes, borrar cuenta).
 - Realtime solo publica las tablas del hogar.

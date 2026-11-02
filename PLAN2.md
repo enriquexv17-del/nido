@@ -1,4 +1,4 @@
-# Nido · Plan de la Fase 2 (final)
+# Nido · Plan de la Fase 2 (final) y Fase 3
 
 Esta fase convierte la Fase 1 (UI + navegación + PWA con datos de prueba) en una
 app **real, terminada y descargable**, con **animaciones cinematográficas** que
@@ -39,7 +39,7 @@ src/data/
   types.ts        tipos del dominio (crudos y derivados) y constantes
   selectors.ts    derive(): aplica el cálculo real a los datos crudos
   queries.ts      hooks useHousehold/usePeople/useExpenses... (mismos nombres)
-  mutations.ts    acciones (gastos, sueldos, integrantes, copiar mes)
+  mutations.ts    acciones (gastos, sueldos, integrantes, copiar mes, ingresos extra, metas y fondos)
   auth.tsx        sesión (correo/contraseña + Google) con Supabase
   provider.tsx    NidoProvider (TanStack Query + auth + mes) y Realtime
   index.ts        API pública de la capa de datos
@@ -130,8 +130,8 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | --- | --- | --- |
 | `npm run build` limpio (`strict: true`) | ✔ | sin errores ni avisos |
 | Prueba de oro del cálculo | ✔ | 146.48 / 201.41 / 183.61 exactos |
-| Pruebas unitarias del cálculo (Vitest) | ✔ | 25 pruebas en verde |
-| Sin errores/avisos de consola | ✔ | 14 rutas verificadas tras A1 |
+| Pruebas unitarias del cálculo (Vitest) | ✔ | 37 pruebas en verde (12 nuevas de ahorro) |
+| Sin errores/avisos de consola | ✔ | 16 rutas verificadas (incluye Fase 3) |
 | Capa de datos conectada (mismos hooks) | ✔ | A1 (build + consola OK) |
 | Tiempo real entre dos sesiones | ✔ | modo demo (BroadcastChannel) entre dos pestañas; Supabase real queda pendiente |
 | Estados de carga, vacío, error y sin conexión | ✔ | esqueletos con shimmer; aviso «Sin conexión» probado sin red |
@@ -143,7 +143,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | Lighthouse móvil | ✔ | rendimiento 98 · accesibilidad 100 · buenas prácticas 100 |
 | PWA instalable | ✔ | manifiesto (nombre, iconos 192/512, `standalone`) + `sw.js` servido |
 | Animaciones ≥ 55 fps con CPU ×4 | ✔ | 60.2 fps y 0 tareas largas en la ventana de animación (`npm run perf`) |
-| Diseño sin cambios vs. Fase 1 | ✔ | 14 rutas en `capturas-fase2/{movil,pc}` comparadas con la maqueta |
+| Diseño sin cambios vs. Fase 1 | ✔ | 16 rutas en `capturas-fase3/{movil,pc}` comparadas con la maqueta |
 | APK firmado | pendiente | requiere Android SDK + keystore (tuyo) |
 | Instalador de PC | pendiente | requiere Rust/WebView2 (tuyo) |
 | PWA iPhone | pendiente | ya existe; se actualiza sola |
@@ -205,3 +205,69 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
     compara. La barra de descarga es simulada (todavía no hay APK que bajar) y
     «Instalar y reiniciar» aplica la PWA (service worker + recarga). La barra
     lateral y la fila de «Más» muestran la versión real.
+
+## Fase 3 · Ingresos extra y ahorros (final)
+
+Dos secciones **personales** dentro de «Más», sin tocar la barra inferior ni el
+diseño de la Fase 1. No entran al reparto del hogar ni a la prueba de oro.
+
+### Qué se agregó
+
+| Sección | Ruta | Qué hace |
+| --- | --- | --- |
+| Otros ingresos | `/mas/otros-ingresos` | Registra ingresos de negocios o trabajos aparte (fuente, qué fue, monto y día opcional) con crear, editar y eliminar. |
+| Ahorros y metas | `/mas/ahorros` | Muestra lo que sobra del mes (neto + otros ingresos − tu parte de gastos), lo reparte en fondos automáticos editables y lleva metas con progreso. |
+
+- **Fondos automáticos:** cada fondo recibe un porcentaje de lo que sobra. Si los
+  porcentajes suman más de 100, se escalan en proporción para no ahorrar de más.
+  El pie muestra «Total ahorro» y «Queda libre».
+- **Metas:** nombre, objetivo, ahorrado, frecuencia (diario, semanal o mensual) y
+  mes límite opcional. Se calcula cuánto apartar por periodo y el progreso con
+  una barra `transform: scaleX(...)`.
+- **Sumar ahorro:** botón por meta para incrementar lo ahorrado sin editar todo.
+
+### Datos y cálculo
+
+- `src/data/types.ts`: `RawOtherIncome`, `RawGoal`, `RawFund` y `SavingsFrequency`;
+  `Snapshot` incluye `otherIncomes`, `goals` y `funds`.
+- `src/data/mock.dev.ts`: datos de ejemplo de noviembre (marca de ropa $60 y
+  edición de video $45), dos metas y tres fondos. `normalize()` completa los
+  arreglos nuevos para no perder datos guardados antes de la actualización.
+- `src/lib/calc/savings.ts`: `availableToSave`, `distributeFunds` (método del
+  mayor resto, suma exacta) y `goalProgress` (diario, semanal o mensual, con o sin
+  fecha). 12 pruebas nuevas.
+- La migración `supabase/migrations/20260101000014_savings.sql` deja escritas las
+  tablas `other_incomes`, `savings_goals` y `savings_funds` con RLS personal.
+  **No se aplicó.**
+
+Con los datos de ejemplo, Enrique tiene neto $359.00 + otros ingresos $105.00 −
+su parte $146.48 = **$317.52** disponibles; el reparto 40/20/40 da
+$127.01 / $63.50 / $127.01. La prueba de oro del hogar sigue exacta:
+359.00 / 493.62 / 450.00 y 146.48 / 201.41 / 183.61.
+
+### Pasos de trabajo (y commits)
+
+| Paso | Descripción | Estado |
+| --- | --- | --- |
+| 1 | Modelo de datos de ingresos extra, metas y fondos | ✔ |
+| 2 | Cálculo del ahorro + pruebas | ✔ |
+| 3 | Capa de datos (API, consultas, acciones) + migración SQL | ✔ |
+| 4 | Pantalla de otros ingresos (CRUD personal) | ✔ |
+| 5 | Pantalla de ahorros y metas (fondos, automático y objetivos) | ✔ |
+| 6 | Flujos Playwright + rutas nuevas en consola y accesibilidad | ✔ |
+| 7 | Documentación (`PLAN2.md`, `supabase/README.md`) | ✔ |
+
+### Verificación de la Fase 3
+
+| Requisito | Estado | Nota |
+| --- | --- | --- |
+| `npm run build` limpio (`strict: true`) | ✔ | sin errores ni avisos |
+| Pruebas unitarias (Vitest) | ✔ | 37 en verde (12 nuevas de ahorro) |
+| Playwright | ✔ | 38 pasan, 12 omitidos (una vez basta) |
+| Cero errores/avisos de consola | ✔ | rutas nuevas incluidas |
+| Accesibilidad básica | ✔ | `h1` único, botones con nombre, campos con etiqueta |
+| Prueba de oro intacta | ✔ | netos y reparto exactos; gastos $531.50 |
+| Ingresos extra personales | ✔ | fuera del reparto; crear, editar, eliminar y persistencia local |
+| Ahorro automático | ✔ | fondos editables con monto calculado y aviso si suman > 100 % |
+| Metas con progreso | ✔ | «Aparta» por periodo y barra con `transform` |
+| Animación | ✔ | solo `transform`/`opacity`; reduced motion con fundidos de 120 ms |
