@@ -1,13 +1,22 @@
+import { useLocation } from "react-router-dom";
 import { BackHeader } from "../components/ScreenHeader";
 import { Avatar } from "../components/Avatar";
 import { IconSquare } from "../components/IconSquare";
+import { CountUp } from "../components/CountUp";
 import { formatPct, formatUSD } from "../lib/format";
-import { useExpenses } from "../data";
+import { useExpenses, usePeopleMode } from "../data";
 import { useSession } from "../lib/session";
+
+type Mode = "salary" | "equal";
 
 export function RepartoDetalle() {
   const expenses = useExpenses();
-  const { person } = useSession();
+  const { person: you } = useSession();
+  const location = useLocation();
+  const mode: Mode =
+    (location.state as { mode?: Mode } | null)?.mode === "equal" ? "equal" : "salary";
+  const people = usePeopleMode(mode);
+  const person = people.find((p) => p.id === you.id) ?? you;
 
   return (
     <div className="screen">
@@ -17,11 +26,13 @@ export function RepartoDetalle() {
         <Avatar person={person} size={38} />
         <div className="detalle-person-text">
           <span className="reparto-name">{person.name}</span>
-          <span className="reparto-pct">{formatPct(person.sharePct)} del sueldo del hogar</span>
+          <span className="reparto-pct">
+            <CountUp value={person.sharePct} format={formatPct} /> del sueldo del hogar
+          </span>
         </div>
       </div>
 
-      <div className="card detalle-list">
+      <div className="card detalle-list stagger-list" key={mode}>
         {expenses.map((e) => {
           const mine = person.shareByExpense.find((s) => s.expenseId === e.id)?.amount ?? 0;
           return (
@@ -33,7 +44,9 @@ export function RepartoDetalle() {
                   {formatUSD(e.amount)} × {formatPct(person.sharePct)}
                 </span>
               </div>
-              <span className="detalle-amount">{formatUSD(mine)}</span>
+              <span className="detalle-amount">
+                <CountUp value={mine} format={formatUSD} />
+              </span>
             </div>
           );
         })}
@@ -41,7 +54,9 @@ export function RepartoDetalle() {
 
       <div className="jade-card">
         <span>Tu parte de noviembre</span>
-        <strong>{formatUSD(person.shareAmount)}</strong>
+        <strong>
+          <CountUp value={person.shareAmount} format={formatUSD} />
+        </strong>
       </div>
     </div>
   );

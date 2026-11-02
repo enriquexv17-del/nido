@@ -84,7 +84,9 @@ export function derive(
     const ded = netOf.get(m.id)!;
     const shareCents = shares.byMember[m.id] ?? 0;
     const shareAmount = fromCents(shareCents);
-    const netPct = totalNetCents > 0 ? ((ded.net * 100) / (totalNetCents / 100)) : 0;
+    // Porcentaje real del gasto del hogar que le toca (cambia con el modo de reparto).
+    const sharePct =
+      shares.totalCents > 0 ? (shareCents / shares.totalCents) * 100 : 0;
 
     return {
       id: m.id,
@@ -102,7 +104,7 @@ export function derive(
       isssOn: inc?.isssOn ?? false,
       isrOn: inc?.isrOn ?? false,
       net: ded.net,
-      sharePct: round1(netPct),
+      sharePct: round1(sharePct),
       shareAmount,
       leftover: round2(ded.net - shareAmount),
       shareByExpense: expenses

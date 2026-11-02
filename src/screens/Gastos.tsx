@@ -87,11 +87,13 @@ export function Gastos() {
 
       <button
         type="button"
-        className={`fab breathe${creating ? " is-open" : ""}`}
+        className={`fab${creating ? " is-open" : ""}`}
         aria-label="Nuevo gasto"
         onClick={() => setCreating(true)}
       >
-        <Icon name="plus" size={24} />
+        <span className="fab-breathe">
+          <Icon name="plus" size={24} />
+        </span>
       </button>
 
       <Sheet

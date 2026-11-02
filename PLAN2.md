@@ -115,7 +115,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | C | Supabase: migraciones SQL, RLS, RPC, triggers, `.env.example` | ✔ |
 | D | Entrada funcional + rutas protegidas + cerrar sesión / eliminar cuenta | ✔ |
 | E | Animaciones escenas 1–4 (bienvenida, transiciones, pasos, inicio) | ✔ |
-| F | Animaciones escenas 5-8 (ingresos, gastos, sheets, reparto) | en curso (5-7 hechas) |
+| F | Animaciones escenas 5-8 (ingresos, gastos, sheets, reparto) | ✔ |
 | G | Animaciones escenas 9–11 + estados (skeletons, vacío, error, sin conexión) | pendiente |
 | H | Meses navegables + «Copiar de octubre» + caché sin conexión | pendiente |
 | I | Pantalla Actualizaciones funcional | pendiente |
@@ -173,3 +173,13 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
    `useIncomeActions`) y la caché se refresca; editar un gasto se ve al instante
    en las otras pestañas. Se adelantó este cableado (previsto para el paso F)
    porque sin él no se podía probar el tiempo real.
+9. **Sin elemento compartido entre Reparto y «Tu parte»:** las pestañas usan
+   `AnimatePresence` en `mode="wait"`, así que no hay dos pantallas vivas a la
+   vez para una transición `layoutId`. En su lugar, «Tu parte» recibe por
+   `state` el modo elegido («Según sueldo» / «Partes iguales») y recalcula con
+   el mismo motor, para que las cifras coincidan.
+10. **`sharePct` ahora es el porcentaje real del gasto del hogar** (antes se
+    calculaba sobre el neto). Con el reparto por sueldo los valores coinciden
+    con la maqueta (27.6 % / 37.9 % / 34.5 %); en «Partes iguales» pasa
+    correctamente a 33.3 %. El texto «del sueldo del hogar» de «Tu parte» se
+    conserva por la regla de oro (no se cambia el diseño de la Fase 1).

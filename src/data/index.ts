@@ -46,6 +46,7 @@ export { AuthProvider, useAuth } from "./auth";
 export {
   useHousehold,
   usePeople,
+  usePeopleMode,
   useExpenses,
   useActivity,
   useMonths,

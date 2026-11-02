@@ -86,6 +86,20 @@ export function usePeople(): Person[] {
   return useDerived().data?.people ?? [];
 }
 
+/**
+ * Personas con el reparto calculado en el modo indicado. Permite que la
+ * pantalla de Reparto recuente con el cálculo real al alternar
+ * «Según sueldo» / «Partes iguales».
+ */
+export function usePeopleMode(mode: "salary" | "equal"): Person[] {
+  const query = useSnapshot();
+  const isYouId = useIsYouId(query.data);
+  return useMemo(
+    () => (query.data ? derive(query.data, isYouId, mode).people : []),
+    [query.data, isYouId, mode]
+  );
+}
+
 export function useExpenses(): Expense[] {
   return useDerived().data?.expenses ?? [];
 }
