@@ -1,10 +1,41 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Icon, Logo } from "../components/Icon";
+import { Icon, Logo, type IconName } from "../components/Icon";
 import { Avatar } from "../components/Avatar";
 import { useHousehold } from "../data";
 import { APP_VERSION } from "../lib/appInfo";
 import { useSession } from "../lib/session";
 import { TABS } from "./TabBar";
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: IconName;
+}
+
+/**
+ * Ítems del menú lateral de PC. En móvil no se usa (ahí manda la barra
+ * inferior con las 5 pestañas). «Otros ingresos» y «Ahorros y metas» son
+ * secciones propias aquí, así que en PC no aparecen dentro de «Más».
+ */
+const DESKTOP_ITEMS: NavItem[] = [
+  ...TABS.slice(0, 4),
+  { to: "/mas/otros-ingresos", label: "Otros ingresos", icon: "coins" },
+  { to: "/mas/ahorros", label: "Ahorros y metas", icon: "savings" },
+  TABS[4]
+];
+
+/** Rutas que tienen su propio ítem para que «Más» no se marque dos veces. */
+const OWN_PATHS = ["/mas/otros-ingresos", "/mas/ahorros"];
+
+function isActive(pathname: string, to: string): boolean {
+  if (to === "/mas") {
+    return (
+      pathname === "/mas" ||
+      (pathname.startsWith("/mas/") && !OWN_PATHS.some((p) => pathname.startsWith(p)))
+    );
+  }
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
 
 export function Sidebar() {
   const location = useLocation();
@@ -19,8 +50,8 @@ export function Sidebar() {
       </div>
 
       <nav className="sidebar-nav" aria-label="Principal">
-        {TABS.map((t) => {
-          const active = location.pathname.startsWith(t.to);
+        {DESKTOP_ITEMS.map((t) => {
+          const active = isActive(location.pathname, t.to);
           return (
             <NavLink
               key={t.to}

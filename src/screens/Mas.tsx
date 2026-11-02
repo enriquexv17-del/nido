@@ -19,6 +19,8 @@ interface Row {
   title: string;
   sub: string;
   to?: string;
+  /** En PC estas secciones viven en el menú lateral, no dentro de «Más». */
+  mobileOnly?: boolean;
 }
 
 export function Mas() {
@@ -79,7 +81,8 @@ export function Mas() {
       colorBg: "#DDF5EC",
       title: "Otros ingresos",
       sub: extraTotal > 0 ? `${formatUSD(extraTotal)} este mes` : "Sin ingresos extra",
-      to: "/mas/otros-ingresos"
+      to: "/mas/otros-ingresos",
+      mobileOnly: true
     },
     {
       icon: "savings",
@@ -90,7 +93,8 @@ export function Mas() {
         goals.length > 0
           ? `${goals.length} ${goals.length === 1 ? "meta" : "metas"} · ${formatUSD(goalsSaved)}`
           : "Sin metas todavía",
-      to: "/mas/ahorros"
+      to: "/mas/ahorros",
+      mobileOnly: true
     },
     {
       icon: "refresh",
@@ -155,12 +159,13 @@ export function Mas() {
               <Icon name="chevron-right" size={18} className="settings-chevron" />
             </>
           );
+          const className = `settings-row${r.mobileOnly ? " hide-on-pc" : ""}`;
           return r.to ? (
-            <Link className="settings-row" key={r.title} to={r.to}>
+            <Link className={className} key={r.title} to={r.to}>
               {inner}
             </Link>
           ) : (
-            <div className="settings-row" key={r.title}>
+            <div className={className} key={r.title}>
               {inner}
             </div>
           );
