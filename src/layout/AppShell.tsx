@@ -3,11 +3,13 @@ import { AnimatePresence, m } from "../motion";
 import { useScreenTransition } from "../motion/useScreenTransition";
 import { Sidebar } from "./Sidebar";
 import { TabBar } from "./TabBar";
+import { OfflineBanner } from "../components/States";
 
 export function AppShell() {
   const { key, variants } = useScreenTransition();
   return (
     <div className="app-shell">
+      <OfflineBanner />
       <Sidebar />
       <main className="app-main">
         <div className="app-scroll">

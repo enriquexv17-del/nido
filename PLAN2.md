@@ -116,7 +116,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | D | Entrada funcional + rutas protegidas + cerrar sesión / eliminar cuenta | ✔ |
 | E | Animaciones escenas 1–4 (bienvenida, transiciones, pasos, inicio) | ✔ |
 | F | Animaciones escenas 5-8 (ingresos, gastos, sheets, reparto) | ✔ |
-| G | Animaciones escenas 9–11 + estados (skeletons, vacío, error, sin conexión) | pendiente |
+| G | Animaciones escenas 9–11 + estados (skeletons, vacío, error, sin conexión) | ✔ |
 | H | Meses navegables + «Copiar de octubre» + caché sin conexión | pendiente |
 | I | Pantalla Actualizaciones funcional | pendiente |
 | J | Empaquetado (Capacitor Android + Tauri Windows) | pendiente |
@@ -134,6 +134,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | Sin errores/avisos de consola | ✔ | 14 rutas verificadas tras A1 |
 | Capa de datos conectada (mismos hooks) | ✔ | A1 (build + consola OK) |
 | Tiempo real entre dos sesiones | ✔ | modo demo (BroadcastChannel) entre dos pestañas; Supabase real queda pendiente |
+| Estados de carga, vacío, error y sin conexión | ✔ | esqueletos con shimmer; aviso «Sin conexión» probado sin red |
 | Animaciones ≥ 55 fps con CPU ×4 | pendiente | `npm run perf` |
 | Diseño sin cambios vs. Fase 1 | pendiente | capturas en el paso L |
 | APK firmado | pendiente | requiere Android SDK + keystore (tuyo) |

@@ -5,8 +5,9 @@ import { StackedBar } from "../components/StackedBar";
 import { IconSquare } from "../components/IconSquare";
 import { CountUp } from "../components/CountUp";
 import { formatPct, formatUSD } from "../lib/format";
-import { useActivity, useExpenses, useHousehold, usePeople } from "../data";
+import { useActivity, useDataStatus, useExpenses, useHousehold, usePeople, useRefresh } from "../data";
 import { useSession } from "../lib/session";
+import { EmptyState, ErrorState, ScreenSkeleton } from "../components/States";
 import { AnimatePresence, m, DUR, EASE_CINE, SPRING_POP, SPRING_UI } from "../motion";
 
 export function Inicio() {
@@ -71,6 +72,23 @@ export function Inicio() {
     },
     []
   );
+
+  const status = useDataStatus();
+  const refresh = useRefresh();
+
+  if (status === "loading") return <ScreenSkeleton cards={3} />;
+  if (status === "error") return <ErrorState onRetry={refresh} />;
+  if (status === "empty") {
+    return (
+      <div className="screen">
+        <EmptyState
+          icon="users"
+          title="Aún no hay un hogar"
+          text="Crea o únete a un hogar para ver cuánto te toca este mes."
+        />
+      </div>
+    );
+  }
 
   return (
     <>

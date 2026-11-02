@@ -52,6 +52,7 @@ export {
   useMonths,
   useCurrentMonth,
   useDataStatus,
+  useRefresh,
   useDerived,
   useSnapshot,
   RealtimeBridge

@@ -12,15 +12,18 @@ import { formatUSD } from "../lib/format";
 import { AnimatePresence } from "../motion";
 import {
   EXPENSE_ICON_STYLE,
+  useDataStatus,
   useExpenseActions,
   useExpenses,
   useHousehold,
   usePeople,
+  useRefresh,
   type Expense,
   type ExpenseIcon,
   type ExpenseInput,
   type ExpenseType
 } from "../data";
+import { EmptyState, ErrorState, ScreenSkeleton } from "../components/States";
 
 const ICON_OPTIONS: { icon: ExpenseIcon; label: string }[] = [
   { icon: "building", label: "Renta" },
@@ -43,6 +46,8 @@ export function Gastos() {
 
   const createRef = useRef<ExpenseFormHandle>(null);
   const editRef = useRef<ExpenseFormHandle>(null);
+  const status = useDataStatus();
+  const refresh = useRefresh();
 
   async function onCreate(input: ExpenseInput) {
     await createExpense(input);
@@ -61,6 +66,21 @@ export function Gastos() {
     if (target) await deleteExpense(target.id);
   }
 
+  if (status === "loading") return <ScreenSkeleton cards={4} />;
+  if (status === "error") return <ErrorState onRetry={refresh} />;
+  if (status === "empty") {
+    return (
+      <div className="screen">
+        <ScreenHeader title="Gastos del hogar" />
+        <EmptyState
+          icon="users"
+          title="Aún no hay integrantes"
+          text="Agrega personas a tu hogar para repartir los gastos."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="screen">
       <ScreenHeader title="Gastos del hogar" month={household.monthLabel} />
@@ -70,18 +90,28 @@ export function Gastos() {
         <span className="dark-card-value">{formatUSD(household.totalExpenses)}</span>
       </div>
 
-      <div className="card expense-card">
-        <AnimatePresence initial={false}>
-          {expenses.map((e) => (
-            <ExpenseRow
-              key={e.id}
-              expense={e}
-              onEdit={() => setEditing(e)}
-              onDelete={() => setDeleting(e)}
-            />
-          ))}
-        </AnimatePresence>
-      </div>
+      {expenses.length === 0 ? (
+        <EmptyState
+          icon="wallet"
+          title="Sin gastos este mes"
+          text="Agrega el primero y el reparto se calcula solo."
+          actionLabel="Agregar gasto"
+          onAction={() => setCreating(true)}
+        />
+      ) : (
+        <div className="card expense-card">
+          <AnimatePresence initial={false}>
+            {expenses.map((e) => (
+              <ExpenseRow
+                key={e.id}
+                expense={e}
+                onEdit={() => setEditing(e)}
+                onDelete={() => setDeleting(e)}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
 
       <p className="help-text">Desliza un gasto a la izquierda para editarlo o eliminarlo.</p>
 

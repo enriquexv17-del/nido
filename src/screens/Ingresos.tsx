@@ -10,7 +10,8 @@ import { Button } from "../components/Button";
 import { CountUp } from "../components/CountUp";
 import { formatUSD, formatUSDPlain } from "../lib/format";
 import { calcNet } from "../lib/calc";
-import { useHousehold, useIncomeActions, useMonths, usePeople, type Person } from "../data";
+import { useHousehold, useDataStatus, useIncomeActions, useMonths, usePeople, useRefresh, type Person } from "../data";
+import { EmptyState, ErrorState, ScreenSkeleton } from "../components/States";
 
 export function Ingresos() {
   const household = useHousehold();
@@ -18,6 +19,23 @@ export function Ingresos() {
   const months = useMonths();
   const [month, setMonth] = useState("Nov");
   const [editing, setEditing] = useState<Person | null>(null);
+  const status = useDataStatus();
+  const refresh = useRefresh();
+
+  if (status === "loading") return <ScreenSkeleton cards={3} />;
+  if (status === "error") return <ErrorState onRetry={refresh} />;
+  if (status === "empty") {
+    return (
+      <div className="screen">
+        <ScreenHeader title="Ingresos" />
+        <EmptyState
+          icon="users"
+          title="Aún no hay integrantes"
+          text="Agrega personas a tu hogar para anotar sus sueldos."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="screen">

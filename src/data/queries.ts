@@ -117,6 +117,13 @@ export function useCurrentMonth(): string {
   return shortMonth(month);
 }
 
+export function useRefresh(): () => void {
+  const qc = useQueryClient();
+  return useCallback(() => {
+    void qc.invalidateQueries({ queryKey: ["snapshot"] });
+  }, [qc]);
+}
+
 /** Estado de la carga de datos, para los esqueletos y avisos. */
 export function useDataStatus(): DataStatus {
   return useDerived().status;

@@ -6,8 +6,9 @@ import { StackedBar } from "../components/StackedBar";
 import { Avatar, YouTag } from "../components/Avatar";
 import { CountUp } from "../components/CountUp";
 import { formatPct, formatUSD } from "../lib/format";
-import { useHousehold, usePeopleMode } from "../data";
+import { useHousehold, useExpenses, usePeopleMode, useDataStatus, useRefresh } from "../data";
 import { useSession } from "../lib/session";
+import { EmptyState, ErrorState, ScreenSkeleton } from "../components/States";
 
 type Mode = "salary" | "equal";
 
@@ -16,7 +17,25 @@ export function Reparto() {
   const { person } = useSession();
   const [mode, setMode] = useState<Mode>("salary");
   const people = usePeopleMode(mode);
+  const expenses = useExpenses();
   const navigate = useNavigate();
+  const status = useDataStatus();
+  const refresh = useRefresh();
+
+  if (status === "loading") return <ScreenSkeleton cards={3} />;
+  if (status === "error") return <ErrorState onRetry={refresh} />;
+  if (status === "empty") {
+    return (
+      <div className="screen">
+        <ScreenHeader title="Reparto" />
+        <EmptyState
+          icon="users"
+          title="Aún no hay integrantes"
+          text="Agrega personas a tu hogar para ver el reparto."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="screen">
@@ -32,18 +51,31 @@ export function Reparto() {
       />
 
       <div className="card">
-        <StackedBar
-          height={16}
-          segments={people.map((p) => ({
-            value: p.shareAmount,
-            color: `var(${p.color})`,
-            label: p.id
-          }))}
-        />
+        {expenses.length === 0 ? (
+          <p className="help-text">Aún no hay gastos este mes.</p>
+        ) : (
+          <StackedBar
+            height={16}
+            segments={people.map((p) => ({
+              value: p.shareAmount,
+              color: `var(${p.color})`,
+              label: p.id
+            }))}
+          />
+        )}
       </div>
 
-      <div className="reparto-list stagger-list" key={mode}>
-        {people.map((p) => {
+      {expenses.length === 0 ? (
+        <EmptyState
+          icon="wallet"
+          title="Sin gastos este mes"
+          text="Cuando agregues gastos, aquí verás cuánto paga cada quien."
+          actionLabel="Ir a Gastos"
+          onAction={() => navigate("/gastos")}
+        />
+      ) : (
+        <div className="reparto-list stagger-list" key={mode}>
+          {people.map((p) => {
           const active = p.id === person.id;
           return (
             <button
@@ -75,7 +107,8 @@ export function Reparto() {
             </button>
           );
         })}
-      </div>
+        </div>
+      )}
 
       <div className="dark-card reparto-total">
         <span className="dark-card-label">Total del hogar</span>
