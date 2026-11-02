@@ -112,7 +112,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | A1 | Conectar la capa de datos (`index.ts`, `session.tsx`, imports, borra `mock.ts`) | ✔ |
 | A2 | Reparto con doble restricción (146.48 / 201.41 / 183.61) | ✔ |
 | B | Cableado raíz (`NidoProvider` + `MotionRoot` + `RealtimeBridge`, `motion.css`, `AnimatePresence`) | ✔ |
-| C | Supabase: migraciones SQL, RLS, RPC, triggers, `.env.example` | pendiente |
+| C | Supabase: migraciones SQL, RLS, RPC, triggers, `.env.example` | ✔ |
 | D | Entrada funcional + rutas protegidas + cerrar sesión / eliminar cuenta | pendiente |
 | E | Animaciones escenas 1–4 (bienvenida, transiciones, pasos, inicio) | pendiente |
 | F | Animaciones escenas 5–8 (ingresos, gastos, sheets, reparto) | pendiente |
