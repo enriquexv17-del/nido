@@ -42,7 +42,7 @@ test("entrada: crear hogar y unirse desde otra pestaña", async ({ browser }) =>
 
   // La pestaña 1 ve a la persona nueva por tiempo real.
   await a.goto("/#/mas/integrantes");
-  await expect(a.getByText("Beto")).toBeVisible({ timeout: 8000 });
+  await expect(a.getByText("Beto").first()).toBeVisible({ timeout: 8000 });
 
   await ctx.close();
 });

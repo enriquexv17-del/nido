@@ -188,6 +188,126 @@
   }
 }
 
+/* ---------- Pasos de entrada ---------- */
+
+/* Barra de progreso que se llena (relleno por escala, no por ancho). */
+.step-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.step-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 99px;
+  background: var(--anil);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.step-bar.is-on::after {
+  animation: nido-step-fill var(--dur-scene) var(--ease-cine) both;
+}
+
+.step-bar:nth-child(1).is-on::after {
+  animation-delay: 0.05s;
+}
+.step-bar:nth-child(2).is-on::after {
+  animation-delay: 0.13s;
+}
+.step-bar:nth-child(3).is-on::after {
+  animation-delay: 0.21s;
+}
+
+@keyframes nido-step-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Campos escalonados en las pantallas de entrada. */
+.entry-body > * {
+  animation: nido-rise var(--dur-normal) var(--ease-cine) both;
+}
+
+.entry-body > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.entry-body > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.entry-body > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.entry-body > *:nth-child(4) {
+  animation-delay: 0.22s;
+}
+.entry-body > *:nth-child(5) {
+  animation-delay: 0.28s;
+}
+.entry-body > *:nth-child(6) {
+  animation-delay: 0.34s;
+}
+
+/* Halo de foco que crece (por escala). */
+.field {
+  position: relative;
+}
+
+.field::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 4px var(--anil-l);
+  opacity: 0;
+  transform: scale(0.97);
+  transition: opacity var(--dur-micro) ease, transform var(--dur-normal) var(--ease-cine);
+  pointer-events: none;
+}
+
+.field.is-focus::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Círculos de color: pop al elegir y check que se dibuja. */
+.color-dot {
+  transition: transform var(--dur-micro) var(--ease-cine);
+}
+
+.color-dot.is-active {
+  animation: nido-pop var(--dur-normal) var(--ease-cine) both;
+}
+
+.color-dot.is-active svg path {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: nido-draw 0.35s var(--ease-cine) 0.08s forwards;
+}
+
+@keyframes nido-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes nido-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 /* ---------- Menos movimiento: todo a fundidos de 120 ms ---------- */
 @media (prefers-reduced-motion: reduce) {
   .breathe,
