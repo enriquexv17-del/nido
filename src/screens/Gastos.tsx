@@ -17,7 +17,7 @@ import {
   type Expense,
   type ExpenseIcon,
   type ExpenseType
-} from "../data/mock";
+} from "../data";
 
 const ICON_OPTIONS: { icon: ExpenseIcon; label: string }[] = [
   { icon: "building", label: "Renta" },

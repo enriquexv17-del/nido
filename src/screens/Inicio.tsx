@@ -3,7 +3,7 @@ import { Avatar, YouTag } from "../components/Avatar";
 import { StackedBar } from "../components/StackedBar";
 import { IconSquare } from "../components/IconSquare";
 import { formatPct, formatUSD } from "../lib/format";
-import { useActivity, useExpenses, useHousehold, usePeople } from "../data/mock";
+import { useActivity, useExpenses, useHousehold, usePeople } from "../data";
 import { useSession } from "../lib/session";
 
 export function Inicio() {

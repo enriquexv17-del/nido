@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Icon } from "./Icon";
 import { IconSquare } from "./IconSquare";
 import { formatUSD } from "../lib/format";
-import type { Expense } from "../data/mock";
+import type { Expense } from "../data";
 
 const ACTION_WIDTH = 138;
 

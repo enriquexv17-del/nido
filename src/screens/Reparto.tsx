@@ -5,7 +5,7 @@ import { Segmented } from "../components/Segmented";
 import { StackedBar } from "../components/StackedBar";
 import { Avatar, YouTag } from "../components/Avatar";
 import { formatPct, formatUSD } from "../lib/format";
-import { useHousehold, usePeople } from "../data/mock";
+import { useHousehold, usePeople } from "../data";
 import { useSession } from "../lib/session";
 
 type Mode = "salary" | "equal";

@@ -35,9 +35,14 @@ y datos reales.
 src/data/
   supabase.ts     cliente de Supabase (o null si no hay variables de entorno)
   mock.dev.ts     datos simulados de la Fase 1 (modo ?dev=1 y pruebas)
-  adapter.ts      elige adapter real o de prueba según configuración
-  queries.ts      hooks useHousehold/usePeople/useExpenses… (mismos nombres)
-  realtime.ts     suscripciones que invalidan la caché
+  api.ts          lectura/escritura con dos modos (real o de prueba)
+  types.ts        tipos del dominio (crudos y derivados) y constantes
+  selectors.ts    derive(): aplica el cálculo real a los datos crudos
+  queries.ts      hooks useHousehold/usePeople/useExpenses... (mismos nombres)
+  mutations.ts    acciones (gastos, sueldos, integrantes, copiar mes)
+  auth.tsx        sesión (correo/contraseña + Google) con Supabase
+  provider.tsx    NidoProvider (TanStack Query + auth + mes) y Realtime
+  index.ts        API pública de la capa de datos
 src/lib/calc/     cálculo puro (AFP, ISSS, Renta, reparto, centavos)
 supabase/migrations/  SQL con tablas, RLS, RPC y triggers
 ```
@@ -88,37 +93,44 @@ Agua $3.86 · Internet $6.89 · Comida $49.61 (suma $146.48).
 
 ## Pasos de trabajo (y commits)
 
-| # | Paso | Estado |
+| Paso | Descripción | Estado |
 | --- | --- | --- |
-| 1 | Plan de la Fase 2 (`PLAN2.md`) | ✔ |
-| 2 | Dependencias + tokens de movimiento | ✔ |
-| 3 | Cálculo puro + pruebas (Vitest) | ✔ |
-| 4 | Capa de datos Supabase + TanStack Query + Realtime (con modo prueba) | ✔ |
-| 5 | Migración SQL (tablas, RLS, RPC, triggers, máx. 3) | ✔ |
-| 6 | Pantallas de entrada funcionales + rutas protegidas | ✔ |
-| 7 | Animaciones: bienvenida, transiciones, pasos, inicio, ingresos, gastos, sheets, reparto, más | ✔ |
-| 8 | Estados de carga / vacío / error / sin conexión | ✔ |
-| 9 | Pantalla Actualizaciones funcional | ✔ |
-| 10 | Empaquetado: Capacitor (Android) + Tauri (PC) + actualizaciones | ✔ |
-| 11 | GitHub Actions (Pages + Releases) | ✔ |
-| 12 | Pruebas de flujos, `perf` y `lighthouse` | ✔ |
-| 13 | README y documentación paso a paso | ✔ |
+| — | Fase 1 (UI, navegación, PWA con datos de prueba) | ✔ |
+| — | Plan de la Fase 2 (`PLAN2.md`) | ✔ |
+| — | Dependencias + sistema de movimiento (`src/motion`) | ✔ |
+| — | Cálculo puro + pruebas (Vitest) | ✔ |
+| — | Capa de datos escrita (`src/data/*`, aún sin conectar) | ✔ |
+| A1 | Conectar la capa de datos (`index.ts`, `session.tsx`, imports, borra `mock.ts`) | ✔ |
+| A2 | Reparto con doble restricción (146.48 / 201.41 / 183.61) | pendiente |
+| B | Cableado raíz (`NidoProvider` + `MotionRoot` + `RealtimeBridge`, `motion.css`, `AnimatePresence`) | pendiente |
+| C | Supabase: migraciones SQL, RLS, RPC, triggers, `.env.example` | pendiente |
+| D | Entrada funcional + rutas protegidas + cerrar sesión / eliminar cuenta | pendiente |
+| E | Animaciones escenas 1–4 (bienvenida, transiciones, pasos, inicio) | pendiente |
+| F | Animaciones escenas 5–8 (ingresos, gastos, sheets, reparto) | pendiente |
+| G | Animaciones escenas 9–11 + estados (skeletons, vacío, error, sin conexión) | pendiente |
+| H | Meses navegables + «Copiar de octubre» + caché sin conexión | pendiente |
+| I | Pantalla Actualizaciones funcional | pendiente |
+| J | Empaquetado (Capacitor Android + Tauri Windows) | pendiente |
+| K | GitHub Actions (Pages + Releases) | pendiente |
+| L | Pruebas de flujos + `perf` + `lighthouse` + capturas | pendiente |
+| M | README + entrega final | pendiente |
 
 ## Verificación
 
 | Requisito | Estado | Nota |
 | --- | --- | --- |
 | `npm run build` limpio (`strict: true`) | ✔ | sin errores ni avisos |
-| Prueba de oro del cálculo | ✔ | valores exactos |
-| Pruebas unitarias del cálculo (Vitest) | ✔ | casos borde incluidos |
-| Tiempo real entre dos sesiones | ✔ código | requiere proyecto Supabase real para verlo en vivo |
-| Animaciones ≥ 55 fps con CPU ×4 | ✔ | `npm run perf` |
-| Sin errores/avisos de consola | ✔ | prueba automática |
-| Diseño sin cambios vs. Fase 1 | ✔ | capturas comparadas |
-| APK firmado | ✔ script | requiere Android SDK + keystore (tuyo) |
-| Instalador de PC | ✔ config | requiere Rust/WebView2 (tuyo) |
-| PWA iPhone | ✔ | ya existe; se actualiza sola |
-| URL pública | ✔ workflow | requiere tu repo de GitHub |
+| Prueba de oro del cálculo | ◐ | totales ideales documentados; falta A2 |
+| Pruebas unitarias del cálculo (Vitest) | ✔ | 22 pruebas en verde |
+| Sin errores/avisos de consola | ✔ | 14 rutas verificadas tras A1 |
+| Capa de datos conectada (mismos hooks) | ✔ | A1 (build + consola OK) |
+| Tiempo real entre dos sesiones | pendiente | requiere proyecto Supabase real |
+| Animaciones ≥ 55 fps con CPU ×4 | pendiente | `npm run perf` |
+| Diseño sin cambios vs. Fase 1 | pendiente | capturas en el paso L |
+| APK firmado | pendiente | requiere Android SDK + keystore (tuyo) |
+| Instalador de PC | pendiente | requiere Rust/WebView2 (tuyo) |
+| PWA iPhone | pendiente | ya existe; se actualiza sola |
+| URL pública | pendiente | requiere tu repo de GitHub |
 
 ## Desviaciones y supuestos (documentados)
 
@@ -132,3 +144,7 @@ Agua $3.86 · Internet $6.89 · Comida $49.61 (suma $146.48).
    compilado final (APK / `.msi`) lo firma y publica en tu máquina o en CI.
 4. **RAE/acentos en mensajes de commit:** el CLI de Git en Windows los escribe
    sin acentos; el texto visible de la app sí los respeta.
+5. **`NidoProvider` se añadió ya en A1** (no en B): `session.tsx` ahora lee las
+   personas de la capa de datos y necesita ese contexto; sin él la app no
+   arranca. En B se completa el cableado raíz (`MotionRoot`, `RealtimeBridge`,
+   `motion.css`, transiciones con `AnimatePresence`).

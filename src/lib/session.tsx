@@ -5,7 +5,7 @@ import {
   useState,
   type ReactNode
 } from "react";
-import { MOCK, type Person, type PersonId } from "../data/mock";
+import { useDerived, type Person, type PersonId } from "../data";
 
 interface SessionValue {
   person: Person;
@@ -15,17 +15,56 @@ interface SessionValue {
 
 const SessionContext = createContext<SessionValue | null>(null);
 
+/**
+ * Persona de relleno mientras llegan los datos reales. Evita pantallas en
+ * blanco antes del primer resultado de la consulta (los esqueletos se encargan
+ * del estado de carga en los componentes).
+ */
+const PLACEHOLDER: Person = {
+  id: "",
+  name: "",
+  initial: "?",
+  color: "--p1",
+  gross: 0,
+  afp: 0,
+  isss: 0,
+  isr: 0,
+  afpOn: false,
+  isssOn: false,
+  isrOn: false,
+  net: 0,
+  sharePct: 0,
+  shareAmount: 0,
+  leftover: 0,
+  shareByExpense: [],
+  memberStatus: "",
+  memberTag: "",
+  role: "member",
+  position: 1
+};
+
+/**
+ * La persona «tú» sale de la capa de datos (la que tenga tu `user_id`). El
+ * cambio «Ver como» del modo desarrollador (`?dev=1`) solo se usa para
+ * capturas y pruebas.
+ */
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [currentId, setCurrentId] = useState<PersonId>("enrique");
+  const { data } = useDerived();
+  const [viewAs, setViewAs] = useState<PersonId | null>(null);
 
   const value = useMemo<SessionValue>(() => {
-    const person = MOCK.people.find((p) => p.id === currentId) ?? MOCK.people[0];
+    const people = data?.people ?? [];
+    const person =
+      people.find((p) => p.id === viewAs) ??
+      people.find((p) => p.isYou) ??
+      people[0] ??
+      PLACEHOLDER;
     return {
       person,
-      people: MOCK.people,
-      setPerson: (id: PersonId) => setCurrentId(id)
+      people,
+      setPerson: (id: PersonId) => setViewAs(id)
     };
-  }, [currentId]);
+  }, [data, viewAs]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

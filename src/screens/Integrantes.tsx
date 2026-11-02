@@ -7,7 +7,7 @@ import { Icon } from "../components/Icon";
 import { Sheet } from "../components/Sheet";
 import { Field } from "../components/Field";
 import { useDevMode } from "../lib/session";
-import { useHousehold, usePeople } from "../data/mock";
+import { useHousehold, usePeople } from "../data";
 
 export function Integrantes() {
   const household = useHousehold();

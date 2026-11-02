@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { Icon, Logo } from "../components/Icon";
 import { Avatar } from "../components/Avatar";
-import { useHousehold } from "../data/mock";
+import { useHousehold } from "../data";
 import { useSession } from "../lib/session";
 import { TABS } from "./TabBar";
 

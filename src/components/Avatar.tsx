@@ -1,4 +1,4 @@
-import type { Person } from "../data/mock";
+import type { Person } from "../data";
 
 interface AvatarProps {
   person: Person;

@@ -2,7 +2,7 @@ import { BackHeader } from "../components/ScreenHeader";
 import { Avatar } from "../components/Avatar";
 import { IconSquare } from "../components/IconSquare";
 import { formatPct, formatUSD } from "../lib/format";
-import { useExpenses } from "../data/mock";
+import { useExpenses } from "../data";
 import { useSession } from "../lib/session";
 
 export function RepartoDetalle() {

@@ -8,7 +8,7 @@ import { Field } from "../components/Field";
 import { Switch } from "../components/Switch";
 import { Button } from "../components/Button";
 import { formatUSD, formatUSDPlain } from "../lib/format";
-import { useHousehold, useMonths, usePeople, type Person } from "../data/mock";
+import { useHousehold, useMonths, usePeople, type Person } from "../data";
 
 export function Ingresos() {
   const household = useHousehold();

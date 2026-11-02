@@ -5,7 +5,7 @@ import { Field } from "../components/Field";
 import { Button } from "../components/Button";
 import { Icon } from "../components/Icon";
 import { Logo } from "../components/Icon";
-import { COLOR_CHOICES } from "../data/mock";
+import { COLOR_CHOICES } from "../data";
 
 export function Unirme() {
   const navigate = useNavigate();

@@ -5,7 +5,7 @@ import { Button } from "../components/Button";
 import { Icon } from "../components/Icon";
 import { PersonRow } from "../components/PersonRow";
 import { Toast } from "../components/Toast";
-import { useHousehold, usePeople } from "../data/mock";
+import { useHousehold, usePeople } from "../data";
 import { copyText } from "../lib/session";
 
 export function Invitar() {

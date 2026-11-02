@@ -1,4 +1,4 @@
-import type { Person } from "../data/mock";
+import type { Person } from "../data";
 import { Avatar, StatusPill, YouTag } from "./Avatar";
 
 interface PersonRowProps {
