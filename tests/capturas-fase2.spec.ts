@@ -14,12 +14,14 @@ const ROUTES: [string, string][] = [
   ["11-mas", "/mas"],
   ["12-integrantes", "/mas/integrantes"],
   ["13-descuentos", "/mas/descuentos"],
-  ["14-actualizaciones", "/mas/actualizaciones"]
+  ["14-otros-ingresos", "/mas/otros-ingresos"],
+  ["15-ahorros", "/mas/ahorros"],
+  ["16-actualizaciones", "/mas/actualizaciones"]
 ];
 
-/** Capturas finales de la Fase 2 (móvil y PC) para la tabla de verificación. */
-test("capturas de todas las rutas (Fase 2)", async ({ page }, testInfo) => {
-  const dir = `capturas-fase2/${testInfo.project.name}`;
+/** Capturas finales de la Fase 3 (móvil y PC) para la tabla de verificación. */
+test("capturas de todas las rutas (Fase 3)", async ({ page }, testInfo) => {
+  const dir = `capturas-fase3/${testInfo.project.name}`;
   for (const [name, route] of ROUTES) {
     await page.goto(`/#${route}`);
     await page.waitForTimeout(600);
@@ -30,7 +32,7 @@ test("capturas de todas las rutas (Fase 2)", async ({ page }, testInfo) => {
 /** Fotogramas de las animaciones clave (solo móvil). */
 test("capturas de animaciones", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "movil", "una vez basta");
-  const dir = "capturas-fase2/animaciones";
+  const dir = "capturas-fase3/animaciones";
 
   async function shot(name: string) {
     await page.screenshot({ path: `${dir}/${name}.png` });

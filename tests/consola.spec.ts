@@ -14,6 +14,8 @@ const ROUTES = [
   "/mas",
   "/mas/integrantes",
   "/mas/descuentos",
+  "/mas/otros-ingresos",
+  "/mas/ahorros",
   "/mas/actualizaciones"
 ];
 

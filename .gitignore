@@ -6,6 +6,7 @@ dist-ssr
 .DS_Store
 capturas
 capturas-fase2
+capturas-fase3
 test-results
 playwright-report
 scripts/_*.mjs
