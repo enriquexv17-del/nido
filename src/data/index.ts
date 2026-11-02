@@ -27,7 +27,11 @@ export type {
   RawMember,
   RawIncome,
   RawExpense,
-  RawActivity
+  RawActivity,
+  RawOtherIncome,
+  RawGoal,
+  RawFund,
+  SavingsFrequency
 } from "./types";
 
 export type { DerivedHousehold } from "./selectors";
@@ -52,6 +56,10 @@ export {
   useMonths,
   useMonth,
   useCurrentMonth,
+  useOtherIncomes,
+  useGoals,
+  useFunds,
+  useSavingSummary,
   useDataStatus,
   useRefresh,
   useDerived,
@@ -59,7 +67,7 @@ export {
   RealtimeBridge
 } from "./queries";
 
-export type { DataStatus } from "./queries";
+export type { DataStatus, SavingSummary } from "./queries";
 
 /* ---------------- Acciones ---------------- */
 
@@ -68,12 +76,17 @@ export {
   useIncomeActions,
   useMemberActions,
   useCopyMonth,
+  useOtherIncomeActions,
+  useGoalActions,
+  useFundActions,
   useHouseholdSetup
 } from "./mutations";
 
+export type { OtherIncomeDraft, GoalDraft, FundDraft } from "./mutations";
+
 export { previewHousehold } from "./api";
 
-export type { ExpenseInput } from "./api";
+export type { ExpenseInput, OtherIncomeInput, GoalInput, FundInput } from "./api";
 
 export { derive };
 

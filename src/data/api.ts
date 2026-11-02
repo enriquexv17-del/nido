@@ -7,7 +7,18 @@
  */
 import { mockStore } from "./mock.dev";
 import { isSupabaseConfigured, supabase } from "./supabase";
-import type { ExpenseIcon, ExpenseType, RawExpense, RawIncome, RawMember, Snapshot } from "./types";
+import type {
+  ExpenseIcon,
+  ExpenseType,
+  RawExpense,
+  RawFund,
+  RawGoal,
+  RawIncome,
+  RawMember,
+  RawOtherIncome,
+  SavingsFrequency,
+  Snapshot
+} from "./types";
 
 export const DATA_MODE: "supabase" | "demo" = isSupabaseConfigured ? "supabase" : "demo";
 
@@ -57,16 +68,24 @@ async function loadRealSnapshot(month: string): Promise<Snapshot> {
 
   const householdId = str(memberList[0].household_id);
 
-  const [householdRes, incomeRes, expenseRes, activityRes] = await Promise.all([
-    client.from("households").select("*").eq("id", householdId).single(),
-    client.from("income_entries").select("*").eq("month", month),
-    client.from("expenses").select("*").eq("month", month).order("created_at", { ascending: true }),
-    client
-      .from("activity")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(20)
-  ]);
+  const [householdRes, incomeRes, expenseRes, activityRes, otherIncomeRes, goalRes, fundRes] =
+    await Promise.all([
+      client.from("households").select("*").eq("id", householdId).single(),
+      client.from("income_entries").select("*").eq("month", month),
+      client.from("expenses").select("*").eq("month", month).order("created_at", { ascending: true }),
+      client
+        .from("activity")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20),
+      client
+        .from("other_incomes")
+        .select("*")
+        .eq("month", month)
+        .order("created_at", { ascending: true }),
+      client.from("savings_goals").select("*").order("created_at", { ascending: true }),
+      client.from("savings_funds").select("*").order("created_at", { ascending: true })
+    ]);
 
   const h = (householdRes.data ?? {}) as Row;
 
@@ -109,6 +128,38 @@ async function loadRealSnapshot(month: string): Promise<Snapshot> {
     at: str(a.created_at)
   }));
 
+  const otherIncomes: RawOtherIncome[] = ((otherIncomeRes.data ?? []) as Row[])
+    .filter((o) => str(o.month) === month)
+    .map((o) => ({
+      id: str(o.id),
+      memberId: str(o.member_id),
+      month: str(o.month),
+      source: str(o.source),
+      note: str(o.note),
+      amount: num(o.amount),
+      day: o.day == null ? undefined : num(o.day),
+      createdAt: str(o.created_at)
+    }));
+
+  const goals: RawGoal[] = ((goalRes.data ?? []) as Row[]).map((g) => ({
+    id: str(g.id),
+    memberId: str(g.member_id),
+    name: str(g.name),
+    target: num(g.target),
+    saved: num(g.saved),
+    frequency: (str(g.frequency) as SavingsFrequency) || "monthly",
+    dueMonth: str(g.due_month) || undefined,
+    createdAt: str(g.created_at)
+  }));
+
+  const funds: RawFund[] = ((fundRes.data ?? []) as Row[]).map((f) => ({
+    id: str(f.id),
+    memberId: str(f.member_id),
+    name: str(f.name),
+    pct: num(f.pct),
+    note: str(f.note) || undefined
+  }));
+
   return {
     household: {
       id: householdId,
@@ -123,9 +174,9 @@ async function loadRealSnapshot(month: string): Promise<Snapshot> {
     incomes,
     expenses,
     activity,
-    otherIncomes: [],
-    goals: [],
-    funds: [],
+    otherIncomes,
+    goals,
+    funds,
     month
   };
 }
@@ -288,6 +339,163 @@ export async function copyMonth(from: string, to: string): Promise<void> {
     return;
   }
   const { error } = await supabase.rpc("copy_month", { p_from: from, p_to: to });
+  if (error) throw error;
+}
+
+/* ---------------- Fase 3: ingresos extra, metas y fondos ---------------- */
+
+export interface OtherIncomeInput {
+  memberId: string;
+  month: string;
+  source: string;
+  note: string;
+  amount: number;
+  day?: number;
+}
+
+export async function createOtherIncome(input: OtherIncomeInput, actor: Actor): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().addOtherIncome(input, actor.name, actor.id);
+    return;
+  }
+  const householdId = await getHouseholdId();
+  const { error } = await supabase.from("other_incomes").insert({
+    household_id: householdId,
+    member_id: input.memberId,
+    month: input.month,
+    source: input.source,
+    note: input.note,
+    amount: input.amount,
+    day: input.day ?? null
+  });
+  if (error) throw error;
+}
+
+export async function updateOtherIncome(
+  id: string,
+  patch: OtherIncomeInput,
+  actor: Actor
+): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().updateOtherIncome(id, patch, actor.name, actor.id);
+    return;
+  }
+  const { error } = await supabase
+    .from("other_incomes")
+    .update({
+      source: patch.source,
+      note: patch.note,
+      amount: patch.amount,
+      day: patch.day ?? null
+    })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteOtherIncome(id: string, actor: Actor): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().deleteOtherIncome(id, actor.name, actor.id);
+    return;
+  }
+  const { error } = await supabase.from("other_incomes").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export interface GoalInput {
+  memberId: string;
+  name: string;
+  target: number;
+  saved: number;
+  frequency: SavingsFrequency;
+  dueMonth?: string;
+}
+
+export async function createGoal(input: GoalInput): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().addGoal(input);
+    return;
+  }
+  const householdId = await getHouseholdId();
+  const { error } = await supabase.from("savings_goals").insert({
+    household_id: householdId,
+    member_id: input.memberId,
+    name: input.name,
+    target: input.target,
+    saved: input.saved,
+    frequency: input.frequency,
+    due_month: input.dueMonth ?? null
+  });
+  if (error) throw error;
+}
+
+export async function updateGoal(id: string, patch: GoalInput): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().updateGoal(id, patch);
+    return;
+  }
+  const { error } = await supabase
+    .from("savings_goals")
+    .update({
+      name: patch.name,
+      target: patch.target,
+      saved: patch.saved,
+      frequency: patch.frequency,
+      due_month: patch.dueMonth ?? null
+    })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteGoal(id: string): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().deleteGoal(id);
+    return;
+  }
+  const { error } = await supabase.from("savings_goals").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export interface FundInput {
+  memberId: string;
+  name: string;
+  pct: number;
+  note?: string;
+}
+
+export async function createFund(input: FundInput): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().addFund(input);
+    return;
+  }
+  const householdId = await getHouseholdId();
+  const { error } = await supabase.from("savings_funds").insert({
+    household_id: householdId,
+    member_id: input.memberId,
+    name: input.name,
+    pct: input.pct,
+    note: input.note ?? null
+  });
+  if (error) throw error;
+}
+
+export async function updateFund(id: string, patch: FundInput): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().updateFund(id, patch);
+    return;
+  }
+  const { error } = await supabase
+    .from("savings_funds")
+    .update({ name: patch.name, pct: patch.pct, note: patch.note ?? null })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteFund(id: string): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().deleteFund(id);
+    return;
+  }
+  const { error } = await supabase.from("savings_funds").delete().eq("id", id);
   if (error) throw error;
 }
 

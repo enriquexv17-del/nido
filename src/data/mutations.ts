@@ -102,6 +102,109 @@ export function useCopyMonth() {
   return { copyMonth: copy.mutateAsync, isSaving: copy.isPending };
 }
 
+/* ---------------- Fase 3: ingresos extra, metas y fondos ---------------- */
+
+export interface OtherIncomeDraft {
+  source: string;
+  note: string;
+  amount: number;
+  day?: number;
+}
+
+export function useOtherIncomeActions() {
+  const { month } = useDataContext();
+  const actor = useActor();
+  const invalidate = useInvalidate();
+
+  const create = useMutation({
+    mutationFn: (input: OtherIncomeDraft) =>
+      api.createOtherIncome({ ...input, memberId: actor.id, month }, actor),
+    onSuccess: invalidate
+  });
+  const update = useMutation({
+    mutationFn: (args: { id: string; patch: OtherIncomeDraft }) =>
+      api.updateOtherIncome(args.id, { ...args.patch, memberId: actor.id, month }, actor),
+    onSuccess: invalidate
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => api.deleteOtherIncome(id, actor),
+    onSuccess: invalidate
+  });
+
+  return {
+    createOtherIncome: create.mutateAsync,
+    updateOtherIncome: update.mutateAsync,
+    deleteOtherIncome: remove.mutateAsync,
+    isSaving: create.isPending || update.isPending || remove.isPending
+  };
+}
+
+export interface GoalDraft {
+  name: string;
+  target: number;
+  saved: number;
+  frequency: api.GoalInput["frequency"];
+  dueMonth?: string;
+}
+
+export function useGoalActions() {
+  const actor = useActor();
+  const invalidate = useInvalidate();
+
+  const create = useMutation({
+    mutationFn: (input: GoalDraft) => api.createGoal({ ...input, memberId: actor.id }),
+    onSuccess: invalidate
+  });
+  const update = useMutation({
+    mutationFn: (args: { id: string; patch: GoalDraft }) =>
+      api.updateGoal(args.id, { ...args.patch, memberId: actor.id }),
+    onSuccess: invalidate
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => api.deleteGoal(id),
+    onSuccess: invalidate
+  });
+
+  return {
+    createGoal: create.mutateAsync,
+    updateGoal: update.mutateAsync,
+    deleteGoal: remove.mutateAsync,
+    isSaving: create.isPending || update.isPending || remove.isPending
+  };
+}
+
+export interface FundDraft {
+  name: string;
+  pct: number;
+  note?: string;
+}
+
+export function useFundActions() {
+  const actor = useActor();
+  const invalidate = useInvalidate();
+
+  const create = useMutation({
+    mutationFn: (input: FundDraft) => api.createFund({ ...input, memberId: actor.id }),
+    onSuccess: invalidate
+  });
+  const update = useMutation({
+    mutationFn: (args: { id: string; patch: FundDraft }) =>
+      api.updateFund(args.id, { ...args.patch, memberId: actor.id }),
+    onSuccess: invalidate
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => api.deleteFund(id),
+    onSuccess: invalidate
+  });
+
+  return {
+    createFund: create.mutateAsync,
+    updateFund: update.mutateAsync,
+    deleteFund: remove.mutateAsync,
+    isSaving: create.isPending || update.isPending || remove.isPending
+  };
+}
+
 /**
  * Crear y unirse a un hogar. Al terminar, limpia la caché del hogar y refresca
  * todo para que la app muestre los datos nuevos al instante.
