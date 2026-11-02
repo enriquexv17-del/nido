@@ -16,6 +16,7 @@ export {
   useTransform,
   useScroll,
   useInView,
+  useDragControls,
   useAnimationFrame,
   animate,
   type Variants,

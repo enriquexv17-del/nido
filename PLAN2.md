@@ -115,7 +115,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | C | Supabase: migraciones SQL, RLS, RPC, triggers, `.env.example` | ✔ |
 | D | Entrada funcional + rutas protegidas + cerrar sesión / eliminar cuenta | ✔ |
 | E | Animaciones escenas 1–4 (bienvenida, transiciones, pasos, inicio) | ✔ |
-| F | Animaciones escenas 5-8 (ingresos, gastos, sheets, reparto) | en curso (5-6 hechas) |
+| F | Animaciones escenas 5-8 (ingresos, gastos, sheets, reparto) | en curso (5-7 hechas) |
 | G | Animaciones escenas 9–11 + estados (skeletons, vacío, error, sin conexión) | pendiente |
 | H | Meses navegables + «Copiar de octubre» + caché sin conexión | pendiente |
 | I | Pantalla Actualizaciones funcional | pendiente |

@@ -402,7 +402,6 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  animation: nido-fade 0.18s ease;
 }
 
 .overlay--center {
@@ -419,11 +418,18 @@
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  animation: nido-rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.overlay.is-closing .sheet {
-  animation: nido-fall 0.2s ease forwards;
+/* Zona para arrastrar la hoja hacia abajo (no bloquea el desplazamiento del cuerpo). */
+.sheet-grab {
+  flex: none;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.sheet-grab:active {
+  cursor: grabbing;
 }
 
 .sheet-handle {
@@ -470,7 +476,6 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  animation: nido-pop 0.18s ease;
 }
 
 .dialog-icon {
