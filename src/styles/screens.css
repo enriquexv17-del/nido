@@ -79,15 +79,26 @@
   border-radius: 13px;
   display: grid;
   place-items: center;
+  position: relative;
+}
+
+/* Píldora que se desliza entre pestañas (se mueve con layoutId). */
+.tabbar-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 13px;
+  background: var(--anil-l);
+  z-index: 0;
+}
+
+.tabbar-icon svg {
+  position: relative;
+  z-index: 1;
 }
 
 .tabbar-item.is-active {
   color: var(--anil);
   font-weight: 700;
-}
-
-.tabbar-item.is-active .tabbar-icon {
-  background: var(--anil-l);
 }
 
 /* ---------- Barra lateral (PC) ---------- */

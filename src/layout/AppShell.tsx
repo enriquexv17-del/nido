@@ -11,7 +11,7 @@ export function AppShell() {
       <Sidebar />
       <main className="app-main">
         <div className="app-scroll">
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="popLayout" initial={false}>
             <m.div
               key={key}
               className="app-container"

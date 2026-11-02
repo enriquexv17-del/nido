@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { Icon, type IconName } from "../components/Icon";
+import { m, SPRING_UI } from "../motion";
 
 export const TABS: { to: string; label: string; icon: IconName }[] = [
   { to: "/inicio", label: "Inicio", icon: "home" },
@@ -22,6 +23,14 @@ export function TabBar() {
             className={`tabbar-item${active ? " is-active" : ""}`}
           >
             <span className="tabbar-icon">
+              {active ? (
+                <m.span
+                  layoutId="tabbar-pill"
+                  className="tabbar-pill"
+                  transition={SPRING_UI}
+                  aria-hidden="true"
+                />
+              ) : null}
               <Icon name={t.icon} size={20} />
             </span>
             <span className="tabbar-label">{t.label}</span>
