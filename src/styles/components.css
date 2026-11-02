@@ -1,0 +1,740 @@
+/* ============================================================
+   Nido · componentes
+   ============================================================ */
+
+/* ---------- Cabeceras de pantalla ---------- */
+.screen-head,
+.home-head,
+.back-head,
+.desk-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.screen-head,
+.desk-head {
+  align-items: flex-start;
+}
+
+.back-head {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.screen-head-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.screen-month {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.screen-title {
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.15;
+}
+
+.screen-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: #fff;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  flex: none;
+  box-shadow: var(--shadow-card);
+}
+
+/* ---------- Tarjetas ---------- */
+.card {
+  background: #fff;
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  padding: 14px;
+}
+
+.card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dark-card {
+  background: var(--anil-d);
+  color: #fff;
+  border-radius: var(--r-card);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.dark-card-label {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 15ch;
+}
+
+.dark-card-value {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+}
+
+/* ---------- Avatar ---------- */
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 600;
+  line-height: 1;
+  flex: none;
+}
+
+.avatar--ring {
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.you-tag {
+  display: inline-block;
+  margin-left: 6px;
+  background: var(--anil-l);
+  color: var(--anil);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  vertical-align: middle;
+}
+
+.status-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--soft);
+  color: var(--anil);
+  flex: none;
+}
+
+.status-pill--jade {
+  background: var(--jade-l);
+  color: var(--jade-d);
+}
+
+/* ---------- Barra apilada ---------- */
+.stacked-bar {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+}
+
+.stacked-seg {
+  border-radius: 999px;
+  min-width: 3px;
+}
+
+/* ---------- Cuadro de ícono ---------- */
+.icon-square {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--r-btn);
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--anil);
+  color: #fff;
+  transition: filter 0.15s ease, background 0.15s ease;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--maize {
+  background: var(--maiz);
+  color: var(--anil-d);
+}
+
+.btn--outline {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
+}
+
+.btn--ghost {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.btn--soft {
+  background: var(--anil-l);
+  color: var(--anil);
+}
+
+.btn--coral {
+  background: var(--coral);
+  color: #fff;
+}
+
+.btn--white,
+.btn--whatsapp {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.btn--google {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.btn--sm {
+  height: 42px;
+  font-size: 12.5px;
+  padding: 0 14px;
+  border-radius: 12px;
+}
+
+.btn:active {
+  filter: brightness(0.96);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  flex: none;
+}
+
+/* ---------- Campos ---------- */
+.field {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-field);
+  padding: 9px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field.is-focus {
+  border-color: var(--anil);
+  box-shadow: 0 0 0 4px var(--anil-l);
+}
+
+.field-label {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.field-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.field-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.field-old {
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+/* ---------- Interruptor ---------- */
+.switch {
+  width: 44px;
+  height: 24px;
+  border-radius: 14px;
+  border: none;
+  background: #d6daea;
+  position: relative;
+  padding: 0;
+  flex: none;
+  transition: background 0.18s ease;
+}
+
+.switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.18s ease;
+}
+
+.switch.is-on {
+  background: var(--jade);
+}
+
+.switch.is-on .switch-knob {
+  transform: translateX(20px);
+}
+
+/* ---------- Segmentado ---------- */
+.segmented {
+  display: flex;
+  background: #eef0f8;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.segmented-item {
+  flex: 1;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.segmented-item.is-active {
+  background: #fff;
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 2px 6px -3px rgba(23, 27, 52, 0.25);
+}
+
+/* ---------- Chip ---------- */
+.chip {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+}
+
+.chip.is-active {
+  background: var(--anil);
+  border-color: var(--anil);
+  color: #fff;
+  font-weight: 600;
+}
+
+.chip--maize {
+  background: var(--maiz-l);
+  border-color: transparent;
+  color: var(--maiz-text);
+}
+
+.chip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Overlay, sheet y diálogo ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 18, 43, 0.52);
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: nido-fade 0.18s ease;
+}
+
+.overlay--center {
+  align-items: center;
+  padding: 16px;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+  padding: 10px 16px calc(env(safe-area-inset-bottom) + 16px);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  animation: nido-rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.overlay.is-closing .sheet {
+  animation: nido-fall 0.2s ease forwards;
+}
+
+.sheet-handle {
+  width: 38px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--line);
+  margin: 2px auto 10px;
+  flex: none;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sheet-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.sheet-body {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 2px;
+}
+
+.sheet-footer {
+  padding-top: 12px;
+}
+
+.dialog {
+  width: min(340px, 90vw);
+  background: #fff;
+  border-radius: 24px;
+  padding: 22px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: nido-pop 0.18s ease;
+}
+
+.dialog-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--coral-l);
+  color: var(--coral);
+  display: grid;
+  place-items: center;
+}
+
+.dialog-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dialog-text {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.dialog-actions .btn {
+  flex: 1;
+  height: 44px;
+}
+
+/* ---------- Aviso breve ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 92px);
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: #fff;
+  font-size: 12.5px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  z-index: 80;
+  box-shadow: var(--shadow-float);
+  animation: nido-toast 0.2s ease;
+}
+
+/* ---------- Barras de paso ---------- */
+.step-bars {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.step-bars-track {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+}
+
+.step-bar {
+  height: 4px;
+  border-radius: 99px;
+  background: var(--line);
+  flex: 1;
+}
+
+.step-bar.is-on {
+  background: var(--anil);
+}
+
+.step-label {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+/* ---------- Fila de gasto (deslizar) ---------- */
+.expense-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.expense-row {
+  position: relative;
+  overflow: hidden;
+}
+
+.expense-row + .expense-row .expense-row-body {
+  border-top: 1px solid var(--soft-line);
+}
+
+.expense-row-actions {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+}
+
+.expense-action {
+  width: 62px;
+  align-self: stretch;
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.expense-action--edit {
+  background: var(--anil);
+}
+
+.expense-action--del {
+  background: var(--coral);
+}
+
+.expense-row-body {
+  position: relative;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  transition: transform 0.22s ease;
+  touch-action: pan-y;
+}
+
+.expense-row-body.is-dragging {
+  transition: none;
+  user-select: none;
+}
+
+.expense-row-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.expense-row-name {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.expense-row-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.expense-row-amount {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.expense-row-more {
+  display: none;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px;
+  border-radius: 8px;
+}
+
+@media (min-width: 1024px) {
+  .expense-row-more {
+    display: grid;
+    place-items: center;
+  }
+}
+
+/* ---------- Fila de persona ---------- */
+.person-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--soft-line);
+}
+
+.person-row:last-child {
+  border-bottom: none;
+}
+
+.person-row-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.person-row-name {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.person-row-status {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.person-row-owner {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ---------- Animaciones ---------- */
+@keyframes nido-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nido-rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes nido-fall {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes nido-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes nido-toast {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

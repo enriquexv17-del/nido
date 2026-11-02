@@ -1,0 +1,68 @@
+/* ============================================================
+   Nido · tokens de diseño
+   ============================================================ */
+:root {
+  /* Colores base */
+  --ink: #171b34;
+  --muted: #6c7196;
+  --line: #e3e6f3;
+  --bg: #f3f4fa;
+
+  /* Añil */
+  --anil: #2f3fa0;
+  --anil-d: #18205f;
+  --anil-l: #e7eafb;
+
+  /* Jade */
+  --jade: #14b38b;
+  --jade-d: #0b7c60;
+  --jade-l: #ddf5ec;
+
+  /* Maíz */
+  --maiz: #f5b83d;
+  --maiz-l: #fff1cf;
+
+  /* Coral */
+  --coral: #e9605a;
+  --coral-l: #fde6e3;
+
+  /* Colores por persona */
+  --p1: #3b4cc4;
+  --p2: #14b38b;
+  --p3: #e8862a;
+  --pk: #c94f9b;
+
+  /* Otros fondos usados en la maqueta */
+  --soft: #f5f6fc;
+  --soft-line: #eceef8;
+  --maiz-text: #8a5a00;
+
+  /* Radios */
+  --r-card: 18px;
+  --r-hero: 22px;
+  --r-btn: 15px;
+  --r-field: 14px;
+  --r-sheet: 28px;
+  --r-pill: 16px;
+  --r-chip: 10px;
+  --r-switch: 20px;
+
+  /* Sombras */
+  --shadow-card: 0 6px 16px -10px rgba(23, 27, 52, 0.2);
+  --shadow-float: 0 10px 24px -8px rgba(23, 27, 52, 0.32);
+
+  /* Medidas de layout */
+  --tap: 48px;
+  --pad: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
