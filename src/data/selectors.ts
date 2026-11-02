@@ -29,11 +29,38 @@ export interface DerivedHousehold {
   totals: { netCents: number; expensesCents: number };
 }
 
+/**
+ * Caché de `derive`. Varios hooks (`useHousehold`, `usePeople`, `useExpenses`,
+ * `useActivity`, `useSession`…) lo piden por pantalla; como es una función pura
+ * del `Snapshot`, memorizamos por identidad (el `Snapshot` cambia en cada
+ * escritura, así que la caché se invalida sola). Evita recalcular el reparto
+ * muchas veces por render.
+ */
+const deriveCache = new WeakMap<Snapshot, Map<string, DerivedHousehold>>();
+
 /** Deriva todo lo que necesita la interfaz a partir del snapshot. */
 export function derive(
   snapshot: Snapshot,
   isYouId: string | null,
   mode: "salary" | "equal" = "salary"
+): DerivedHousehold {
+  const key = `${isYouId ?? "\u0000"}|${mode}`;
+  let byKey = deriveCache.get(snapshot);
+  if (!byKey) {
+    byKey = new Map();
+    deriveCache.set(snapshot, byKey);
+  }
+  const cached = byKey.get(key);
+  if (cached) return cached;
+  const result = computeDerived(snapshot, isYouId, mode);
+  byKey.set(key, result);
+  return result;
+}
+
+function computeDerived(
+  snapshot: Snapshot,
+  isYouId: string | null,
+  mode: "salary" | "equal"
 ): DerivedHousehold {
   const month = snapshot.month;
   const expenses = snapshot.expenses.filter((e) => e.month === month);

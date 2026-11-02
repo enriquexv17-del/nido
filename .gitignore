@@ -5,6 +5,7 @@ dist-ssr
 *.tsbuildinfo
 .DS_Store
 capturas
+capturas-fase2
 test-results
 playwright-report
 scripts/_*.mjs

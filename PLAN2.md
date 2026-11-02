@@ -121,7 +121,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | I | Pantalla Actualizaciones funcional | ✔ |
 | J | Empaquetado (Capacitor Android + Tauri Windows) | pendiente |
 | K | GitHub Actions (Pages + Releases) | pendiente |
-| L | Pruebas de flujos + `perf` + `lighthouse` + capturas | pendiente |
+| L | Pruebas de flujos + `perf` + `lighthouse` + capturas | ✔ |
 | M | README + entrega final | pendiente |
 
 ## Verificación
@@ -138,8 +138,12 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | Meses navegables y «Copiar de <mes anterior>» | ✔ | Sep/Oct/Nov fijos; cambiar de mes recalcula; copiar funciona |
 | Sin conexión: reabre con los últimos datos | ✔ | service worker + almacén local; editar sin conexión también |
 | Actualizaciones compara versiones reales | ✔ | instalada (`package.json`) vs. publicada (`version.json`); descarga e instala |
-| Animaciones ≥ 55 fps con CPU ×4 | pendiente | `npm run perf` |
-| Diseño sin cambios vs. Fase 1 | pendiente | capturas en el paso L |
+| Flujo completo de gastos (crear/recargar/editar/eliminar) | ✔ | totales 531.50 → 581.50 → 591.50 → 531.50 |
+| Accesibilidad básica en todas las rutas | ✔ | `h1` único, botones con nombre, campos con etiqueta, `lang=es` |
+| Lighthouse móvil | ✔ | rendimiento 98 · accesibilidad 100 · buenas prácticas 100 |
+| PWA instalable | ✔ | manifiesto (nombre, iconos 192/512, `standalone`) + `sw.js` servido |
+| Animaciones ≥ 55 fps con CPU ×4 | ✔ | 60.2 fps y 0 tareas largas en la ventana de animación (`npm run perf`) |
+| Diseño sin cambios vs. Fase 1 | ✔ | 14 rutas en `capturas-fase2/{movil,pc}` comparadas con la maqueta |
 | APK firmado | pendiente | requiere Android SDK + keystore (tuyo) |
 | Instalador de PC | pendiente | requiere Rust/WebView2 (tuyo) |
 | PWA iPhone | pendiente | ya existe; se actualiza sola |
