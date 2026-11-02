@@ -386,14 +386,7 @@
 }
 
 /* ---------- Gesto de deslizar filas (Gastos) ---------- */
-.expense-row-body {
-  touch-action: pan-y;
-  cursor: grab;
-}
-
-.expense-row-body.is-dragging {
-  cursor: grabbing;
-}
+/* El desplazamiento lo controla `motion` (ver `ExpenseRow.tsx`). */
 
 /* Botón flotante: respira y su «+» gira a «×» al abrir la hoja. */
 .fab svg {

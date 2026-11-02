@@ -9,6 +9,7 @@ import { Sheet } from "../components/Sheet";
 import { ConfirmDelete } from "../components/Dialog";
 import { Avatar } from "../components/Avatar";
 import { formatUSD } from "../lib/format";
+import { AnimatePresence } from "../motion";
 import {
   EXPENSE_ICON_STYLE,
   useExpenseActions,
@@ -70,21 +71,23 @@ export function Gastos() {
       </div>
 
       <div className="card expense-card">
-        {expenses.map((e) => (
-          <ExpenseRow
-            key={e.id}
-            expense={e}
-            onEdit={() => setEditing(e)}
-            onDelete={() => setDeleting(e)}
-          />
-        ))}
+        <AnimatePresence initial={false}>
+          {expenses.map((e) => (
+            <ExpenseRow
+              key={e.id}
+              expense={e}
+              onEdit={() => setEditing(e)}
+              onDelete={() => setDeleting(e)}
+            />
+          ))}
+        </AnimatePresence>
       </div>
 
       <p className="help-text">Desliza un gasto a la izquierda para editarlo o eliminarlo.</p>
 
       <button
         type="button"
-        className="fab"
+        className={`fab breathe${creating ? " is-open" : ""}`}
         aria-label="Nuevo gasto"
         onClick={() => setCreating(true)}
       >

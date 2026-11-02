@@ -20,5 +20,6 @@ export {
   animate,
   type Variants,
   type Transition,
-  type MotionValue
+  type MotionValue,
+  type PanInfo
 } from "motion/react";

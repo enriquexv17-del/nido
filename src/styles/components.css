@@ -601,13 +601,13 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  transition: transform 0.22s ease;
   touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
 }
 
-.expense-row-body.is-dragging {
-  transition: none;
-  user-select: none;
+.expense-row-body:active {
+  cursor: grabbing;
 }
 
 .expense-row-text {
