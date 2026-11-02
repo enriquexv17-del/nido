@@ -50,6 +50,7 @@ export {
   useExpenses,
   useActivity,
   useMonths,
+  useMonth,
   useCurrentMonth,
   useDataStatus,
   useRefresh,

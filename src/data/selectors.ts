@@ -8,7 +8,7 @@ import {
   fromCents,
   type CalcExpense
 } from "../lib/calc";
-import { monthLabel, recentMonths, shortMonth } from "../lib/month";
+import { monthLabel } from "../lib/month";
 import {
   EXPENSE_ICON_STYLE,
   type Activity,
@@ -26,7 +26,6 @@ export interface DerivedHousehold {
   people: Person[];
   expenses: Expense[];
   activity: Activity[];
-  months: string[];
   totals: { netCents: number; expensesCents: number };
 }
 
@@ -155,7 +154,6 @@ export function derive(
     people,
     expenses: uiExpenses,
     activity,
-    months: recentMonths(month, 3).map(shortMonth),
     totals: { netCents: totalNetCents, expensesCents: shares.totalCents }
   };
 }

@@ -117,7 +117,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | E | Animaciones escenas 1–4 (bienvenida, transiciones, pasos, inicio) | ✔ |
 | F | Animaciones escenas 5-8 (ingresos, gastos, sheets, reparto) | ✔ |
 | G | Animaciones escenas 9–11 + estados (skeletons, vacío, error, sin conexión) | ✔ |
-| H | Meses navegables + «Copiar de octubre» + caché sin conexión | pendiente |
+| H | Meses navegables + «Copiar de octubre» + caché sin conexión | ✔ |
 | I | Pantalla Actualizaciones funcional | pendiente |
 | J | Empaquetado (Capacitor Android + Tauri Windows) | pendiente |
 | K | GitHub Actions (Pages + Releases) | pendiente |
@@ -135,6 +135,8 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | Capa de datos conectada (mismos hooks) | ✔ | A1 (build + consola OK) |
 | Tiempo real entre dos sesiones | ✔ | modo demo (BroadcastChannel) entre dos pestañas; Supabase real queda pendiente |
 | Estados de carga, vacío, error y sin conexión | ✔ | esqueletos con shimmer; aviso «Sin conexión» probado sin red |
+| Meses navegables y «Copiar de <mes anterior>» | ✔ | Sep/Oct/Nov fijos; cambiar de mes recalcula; copiar funciona |
+| Sin conexión: reabre con los últimos datos | ✔ | service worker + almacén local; editar sin conexión también |
 | Animaciones ≥ 55 fps con CPU ×4 | pendiente | `npm run perf` |
 | Diseño sin cambios vs. Fase 1 | pendiente | capturas en el paso L |
 | APK firmado | pendiente | requiere Android SDK + keystore (tuyo) |
@@ -184,3 +186,12 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
     con la maqueta (27.6 % / 37.9 % / 34.5 %); en «Partes iguales» pasa
     correctamente a 33.3 %. El texto «del sueldo del hogar» de «Tu parte» se
     conserva por la regla de oro (no se cambia el diseño de la Fase 1).
+11. **Meses anclados al mes por defecto:** la fila de meses (Sep/Oct/Nov, del más
+    viejo al más nuevo) se calcula a partir del mes por defecto y **no** del mes
+    seleccionado, para que elegir un mes no reordene la fila. «Copiar de …» copia
+    siempre del mes anterior al activo.
+12. **Sin conexión en modo demo:** los cambios se guardan en `localStorage` de
+    forma síncrona, así que quedan disponibles al reabrir sin red y no hay nada
+    «pendiente» que reintentar; el aviso «Sin conexión» solo informa. El modo
+    Supabase necesitará una cola de escrituras y persistencia de la caché de
+    React Query, que se añadirá al conectar tus claves (no se inventa aquí).

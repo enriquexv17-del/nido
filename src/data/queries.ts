@@ -5,10 +5,10 @@
  */
 import { useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { shortMonth } from "../lib/month";
+import { addMonths, shortMonth } from "../lib/month";
 import { useAuth } from "./auth";
 import { fetchSnapshot } from "./api";
-import { useDataContext, useRealtime } from "./provider";
+import { DEFAULT_MONTH, useDataContext, useRealtime } from "./provider";
 import { derive, type DerivedHousehold } from "./selectors";
 import type { Activity, Expense, Household, Person, Snapshot } from "./types";
 
@@ -108,8 +108,23 @@ export function useActivity(): Activity[] {
   return useDerived().data?.activity ?? [];
 }
 
+/**
+ * Meses navegables, del más viejo al más nuevo, anclados al mes por defecto
+ * (no al mes seleccionado). Así la fila de meses es estable: elegir octubre no
+ * reemplaza la lista, solo cambia cuál aparece activo.
+ */
 export function useMonths(): string[] {
-  return useDerived().data?.months ?? [];
+  return useMemo(() => {
+    const list: string[] = [];
+    for (let i = 2; i >= 0; i--) list.push(addMonths(DEFAULT_MONTH, -i));
+    return list;
+  }, []);
+}
+
+/** Mes activo (`YYYY-MM`) y su setter, para navegar entre meses. */
+export function useMonth(): { month: string; setMonth: (month: string) => void } {
+  const { month, setMonth } = useDataContext();
+  return { month, setMonth };
 }
 
 export function useCurrentMonth(): string {

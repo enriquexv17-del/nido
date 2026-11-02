@@ -8,19 +8,42 @@ import { Field } from "../components/Field";
 import { Switch } from "../components/Switch";
 import { Button } from "../components/Button";
 import { CountUp } from "../components/CountUp";
+import { Toast } from "../components/Toast";
 import { formatUSD, formatUSDPlain } from "../lib/format";
+import { addMonths, monthLabel, shortMonth } from "../lib/month";
 import { calcNet } from "../lib/calc";
-import { useHousehold, useDataStatus, useIncomeActions, useMonths, usePeople, useRefresh, type Person } from "../data";
+import {
+  useCopyMonth,
+  useDataStatus,
+  useHousehold,
+  useIncomeActions,
+  useMonth,
+  useMonths,
+  usePeople,
+  useRefresh,
+  type Person
+} from "../data";
 import { EmptyState, ErrorState, ScreenSkeleton } from "../components/States";
 
 export function Ingresos() {
   const household = useHousehold();
   const people = usePeople();
   const months = useMonths();
-  const [month, setMonth] = useState("Nov");
+  const { month, setMonth } = useMonth();
+  const { copyMonth, isSaving: copying } = useCopyMonth();
   const [editing, setEditing] = useState<Person | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const status = useDataStatus();
   const refresh = useRefresh();
+
+  const previous = addMonths(month, -1);
+  const previousName = monthLabel(previous).split(" ")[0].toLowerCase();
+  const monthLower = household.monthLabel.split(" ")[0].toLowerCase();
+
+  async function onCopy() {
+    await copyMonth({ from: previous, to: month });
+    setToast(`Sueldos copiados de ${previousName}`);
+  }
 
   if (status === "loading") return <ScreenSkeleton cards={3} />;
   if (status === "error") return <ErrorState onRetry={refresh} />;
@@ -45,17 +68,22 @@ export function Ingresos() {
         <div className="chip-row">
           {months.map((m) => (
             <Chip key={m} active={m === month} onClick={() => setMonth(m)}>
-              {m}
+              {shortMonth(m)}
             </Chip>
           ))}
         </div>
-        <button type="button" className="chip chip--maize copy-october">
-          Copiar de octubre
+        <button
+          type="button"
+          className="chip chip--maize copy-october"
+          onClick={onCopy}
+          disabled={copying}
+        >
+          {copying ? "Copiando..." : `Copiar de ${previousName}`}
         </button>
       </div>
 
       <div className="dark-card income-total">
-        <span className="dark-card-label">Neto del hogar en noviembre</span>
+        <span className="dark-card-label">Neto del hogar en {monthLower}</span>
         <span className="dark-card-value">
           <CountUp value={household.totalNet} format={formatUSD} />
         </span>
@@ -100,12 +128,23 @@ export function Ingresos() {
         })}
       </div>
 
-      {editing ? <SalarySheet person={editing} onClose={() => setEditing(null)} /> : null}
+      {editing ? (
+        <SalarySheet person={editing} monthLower={monthLower} onClose={() => setEditing(null)} />
+      ) : null}
+      {toast ? <Toast message={toast} onDone={() => setToast(null)} /> : null}
     </div>
   );
 }
 
-function SalarySheet({ person, onClose }: { person: Person; onClose: () => void }) {
+function SalarySheet({
+  person,
+  monthLower,
+  onClose
+}: {
+  person: Person;
+  monthLower: string;
+  onClose: () => void;
+}) {
   const { saveIncome, isSaving } = useIncomeActions();
   const [gross, setGross] = useState(person.gross.toFixed(2));
   const [afpOn, setAfpOn] = useState(person.afpOn);
@@ -131,7 +170,7 @@ function SalarySheet({ person, onClose }: { person: Person; onClose: () => void 
     <Sheet
       open
       onClose={onClose}
-      title="Sueldo de noviembre"
+      title={`Sueldo de ${monthLower}`}
       footer={
         <Button block onClick={onSave} disabled={isSaving}>
           {isSaving ? "Guardando..." : "Guardar sueldo"}
