@@ -8,8 +8,9 @@ import { Button } from "../components/Button";
 import { Dialog } from "../components/Dialog";
 import { DevSwitcher } from "../components/DevSwitcher";
 import { useSession } from "../lib/session";
-import { useAuth, usePeople } from "../data";
 import { useAppUpdate } from "../lib/useAppUpdate";
+import { useAuth, useOtherIncomes, usePeople } from "../data";
+import { formatUSD } from "../lib/format";
 
 interface Row {
   icon: IconName;
@@ -27,6 +28,8 @@ export function Mas() {
   const count = people.length;
   const { signOut, deleteAccount } = useAuth();
   const { installed, hasUpdate } = useAppUpdate();
+  const otherIncomes = useOtherIncomes();
+  const extraTotal = otherIncomes.reduce((sum, o) => sum + o.amount, 0);
   const [confirm, setConfirm] = useState<null | "signout" | "delete">(null);
   const [busy, setBusy] = useState(false);
 
@@ -67,6 +70,14 @@ export function Mas() {
       colorBg: "#E7EAFB",
       title: "Apariencia",
       sub: "Automática"
+    },
+    {
+      icon: "coins",
+      color: "#0B7C60",
+      colorBg: "#DDF5EC",
+      title: "Otros ingresos",
+      sub: extraTotal > 0 ? `${formatUSD(extraTotal)} este mes` : "Sin ingresos extra",
+      to: "/mas/otros-ingresos"
     },
     {
       icon: "refresh",
