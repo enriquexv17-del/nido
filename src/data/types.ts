@@ -1,5 +1,7 @@
 /** Tipos del dominio de Nido (Fase 2). */
-import type { SavingsFrequency } from "../lib/calc";
+import type { Deduction, SavingsFrequency } from "../lib/calc";
+
+export type { Deduction, DeductionType, DeductionBracket } from "../lib/calc";
 
 export type ExpenseIcon = "building" | "bolt" | "drop" | "wifi" | "utensils" | "wallet";
 
@@ -142,6 +144,15 @@ export interface Household {
 
 /* ---------------- Datos derivados (lo que consume la UI) ---------------- */
 
+/** Un descuento ya aplicado a una persona (para mostrarlo en pantalla). */
+export interface PersonDeduction {
+  id: string;
+  name: string;
+  amount: number;
+  isLaw: boolean;
+  active: boolean;
+}
+
 export interface Person {
   id: PersonId;
   userId?: string | null;
@@ -159,6 +170,10 @@ export interface Person {
   isssOn: boolean;
   isrOn: boolean;
   net: number;
+  /** Descuentos aplicados a esta persona (de ley y personalizados). */
+  deductions: PersonDeduction[];
+  /** Total descontado del bruto. */
+  deductionTotal: number;
   /** Porcentaje del total de gastos. */
   sharePct: number;
   /** Su parte del total de gastos. */
@@ -206,6 +221,8 @@ export interface Snapshot {
   goals: RawGoal[];
   /** Fondos de ahorro automático (Fase 3). */
   funds: RawFund[];
+  /** Descuentos configurables del hogar (Fase 4). */
+  deductions: Deduction[];
   /** Mes activo `YYYY-MM`. */
   month: string;
 }

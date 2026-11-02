@@ -3,9 +3,10 @@
  * aplicando el cálculo real (AFP/ISSS/Renta y reparto).
  */
 import {
-  calcNet,
+  calcDeductions,
   calcShares,
   fromCents,
+  lawDefaults,
   type CalcExpense
 } from "../lib/calc";
 import { monthLabel } from "../lib/month";
@@ -68,13 +69,18 @@ function computeDerived(
   const incomeOf = (memberId: string) =>
     snapshot.incomes.find((i) => i.memberId === memberId && i.month === month);
 
+  // Descuentos configurables del hogar (Fase 4). Si un snapshot antiguo no los
+  // trae, usamos los valores de ley por defecto.
+  const deductions = snapshot.deductions?.length ? snapshot.deductions : lawDefaults();
+
   const netOf = new Map(
     snapshot.members.map((m) => {
       const inc = incomeOf(m.id);
       return [
         m.id,
-        calcNet(
+        calcDeductions(
           inc?.gross ?? 0,
+          deductions,
           {
             afpOn: inc?.afpOn ?? false,
             isssOn: inc?.isssOn ?? false,
@@ -130,6 +136,14 @@ function computeDerived(
       isssOn: inc?.isssOn ?? false,
       isrOn: inc?.isrOn ?? false,
       net: ded.net,
+      deductions: deductions.map((d) => ({
+        id: d.id,
+        name: d.name,
+        amount: ded.byId[d.id] ?? 0,
+        isLaw: d.isLaw,
+        active: d.active
+      })),
+      deductionTotal: ded.total,
       sharePct: round1(sharePct),
       shareAmount,
       leftover: round2(ded.net - shareAmount),

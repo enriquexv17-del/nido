@@ -11,10 +11,11 @@ import { CountUp } from "../components/CountUp";
 import { Toast } from "../components/Toast";
 import { formatUSD, formatUSDPlain } from "../lib/format";
 import { addMonths, monthLabel, shortMonth } from "../lib/month";
-import { calcNet } from "../lib/calc";
+import { calcDeductions, type Deduction } from "../lib/calc";
 import {
   useCopyMonth,
   useDataStatus,
+  useDeductions,
   useHousehold,
   useIncomeActions,
   useMonth,
@@ -24,6 +25,18 @@ import {
   type Person
 } from "../data";
 import { EmptyState, ErrorState, ScreenSkeleton } from "../components/States";
+
+function lawSubtitle(d: Deduction): string {
+  if (d.key === "afp") return "Pensión";
+  if (d.key === "isss") return `Salud · tope ${formatUSDPlain(d.cap ?? 30)}`;
+  if (d.key === "isr") return "Renta · según tabla";
+  if (d.type === "percent") {
+    return `${(d.value * 100).toLocaleString("en-US", {
+      maximumFractionDigits: 2
+    })}% del sueldo`;
+  }
+  return "Descuento de ley";
+}
 
 export function Ingresos() {
   const household = useHousehold();
@@ -91,7 +104,18 @@ export function Ingresos() {
 
       <div className="income-list stagger-list">
         {people.map((p) => {
-          const hasDeductions = p.afpOn || p.isssOn;
+          const applied = p.deductions.filter((d) => d.amount > 0);
+          const lawText = applied
+            .filter((d) => d.isLaw)
+            .map((d) => `${d.name.split(" ")[0]} \u2212${formatUSDPlain(d.amount)}`)
+            .join(" · ");
+          const customTotal = applied
+            .filter((d) => !d.isLaw)
+            .reduce((sum, d) => sum + d.amount, 0);
+          const foot =
+            [lawText, customTotal > 0 ? `otros \u2212${formatUSDPlain(customTotal)}` : ""]
+              .filter(Boolean)
+              .join(" · ") || "Sin descuentos";
           return (
             <article className="card income-card" key={p.id}>
               <div className="income-main">
@@ -118,11 +142,7 @@ export function Ingresos() {
                   <Icon name="pencil" size={17} />
                 </button>
               </div>
-              <div className="income-foot">
-                {hasDeductions
-                  ? `AFP \u2212${formatUSDPlain(p.afp)} · ISSS \u2212${formatUSDPlain(p.isss)}`
-                  : "Sin descuentos de ley"}
-              </div>
+              <div className="income-foot">{foot}</div>
             </article>
           );
         })}
@@ -146,14 +166,27 @@ function SalarySheet({
   onClose: () => void;
 }) {
   const { saveIncome, isSaving } = useIncomeActions();
+  const deductions = useDeductions();
   const [gross, setGross] = useState(person.gross.toFixed(2));
   const [afpOn, setAfpOn] = useState(person.afpOn);
   const [isssOn, setIsssOn] = useState(person.isssOn);
   const [isrOn, setIsrOn] = useState(person.isrOn);
 
   const grossNum = Number.parseFloat(gross) || 0;
-  const ded = calcNet(grossNum, { afpOn, isssOn, isrOn });
+  const ded = calcDeductions(grossNum, deductions, { afpOn, isssOn, isrOn });
+  const lawDeductions = deductions
+    .filter((d) => d.isLaw)
+    .sort((a, b) => a.order - b.order);
+  const customDeductions = deductions.filter((d) => !d.isLaw && d.active);
   const noDeductions = !afpOn && !isssOn;
+
+  const flagOf = (key?: string) =>
+    key === "afp" ? afpOn : key === "isss" ? isssOn : key === "isr" ? isrOn : true;
+  const setFlag = (key: string | undefined, next: boolean) => {
+    if (key === "afp") setAfpOn(next);
+    else if (key === "isss") setIsssOn(next);
+    else if (key === "isr") setIsrOn(next);
+  };
 
   async function onSave() {
     await saveIncome({
@@ -187,36 +220,38 @@ function SalarySheet({
       <span className="sheet-label">Descuentos de ley (El Salvador)</span>
 
       <div className="deduction-card">
-        <div className="deduction-row">
-          <div className="deduction-text">
-            <span className="deduction-name">AFP · 7.25%</span>
-            <span className="deduction-sub">Pensión</span>
-          </div>
-          <span className="deduction-amount">
-            {afpOn ? `\u2212${formatUSDPlain(ded.afp)}` : "—"}
-          </span>
-          <Switch checked={afpOn} onChange={setAfpOn} label="AFP" />
-        </div>
+        {lawDeductions.map((d) => {
+          const checked = flagOf(d.key);
+          return (
+            <div className="deduction-row" key={d.id}>
+              <div className="deduction-text">
+                <span className="deduction-name">{d.name}</span>
+                <span className="deduction-sub">{lawSubtitle(d)}</span>
+              </div>
+              <span className="deduction-amount">
+                {checked ? `\u2212${formatUSDPlain(ded.byId[d.id] ?? 0)}` : "—"}
+              </span>
+              <Switch
+                checked={checked}
+                onChange={(next) => setFlag(d.key, next)}
+                label={d.name}
+              />
+            </div>
+          );
+        })}
 
-        <div className="deduction-row">
-          <div className="deduction-text">
-            <span className="deduction-name">ISSS · 3%</span>
-            <span className="deduction-sub">Salud · tope $30</span>
+        {customDeductions.map((d) => (
+          <div className="deduction-row" key={d.id}>
+            <div className="deduction-text">
+              <span className="deduction-name">{d.name}</span>
+              <span className="deduction-sub">Descuento personalizado</span>
+            </div>
+            <span className="deduction-amount">
+              {"\u2212"}
+              {formatUSDPlain(ded.byId[d.id] ?? 0)}
+            </span>
           </div>
-          <span className="deduction-amount">
-            {isssOn ? `\u2212${formatUSDPlain(ded.isss)}` : "—"}
-          </span>
-          <Switch checked={isssOn} onChange={setIsssOn} label="ISSS" />
-        </div>
-
-        <div className="deduction-row">
-          <div className="deduction-text">
-            <span className="deduction-name">Renta (ISR)</span>
-            <span className="deduction-sub">Solo si pasas de $550</span>
-          </div>
-          <span className="deduction-amount">—</span>
-          <Switch checked={isrOn} onChange={setIsrOn} label="Renta (ISR)" />
-        </div>
+        ))}
       </div>
 
       <div className="receive-box">

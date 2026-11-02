@@ -7,6 +7,7 @@ import { useAuth } from "./auth";
 import { useDataContext } from "./provider";
 import { useDerived } from "./queries";
 import type { Actor } from "./api";
+import type { Deduction } from "./types";
 
 function useActor(): Actor {
   const { user } = useAuth();
@@ -202,6 +203,39 @@ export function useFundActions() {
     updateFund: update.mutateAsync,
     deleteFund: remove.mutateAsync,
     isSaving: create.isPending || update.isPending || remove.isPending
+  };
+}
+
+/* ---------------- Fase 4: descuentos editables ---------------- */
+
+export function useDeductionActions() {
+  const { snapshot } = useDerived();
+  const invalidate = useInvalidate();
+
+  const create = useMutation({
+    mutationFn: (input: api.DeductionInput) => api.createDeduction(input),
+    onSuccess: invalidate
+  });
+  const update = useMutation({
+    mutationFn: (args: { id: string; patch: Partial<Deduction> }) =>
+      api.updateDeduction(args.id, args.patch),
+    onSuccess: invalidate
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => api.deleteDeduction(id),
+    onSuccess: invalidate
+  });
+  const reset = useMutation({
+    mutationFn: () => api.resetLawValues(snapshot?.deductions ?? []),
+    onSuccess: invalidate
+  });
+
+  return {
+    createDeduction: create.mutateAsync,
+    updateDeduction: update.mutateAsync,
+    deleteDeduction: remove.mutateAsync,
+    resetLawValues: reset.mutateAsync,
+    isSaving: create.isPending || update.isPending || remove.isPending || reset.isPending
   };
 }
 

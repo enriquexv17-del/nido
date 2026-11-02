@@ -31,7 +31,11 @@ export type {
   RawOtherIncome,
   RawGoal,
   RawFund,
-  SavingsFrequency
+  SavingsFrequency,
+  Deduction,
+  DeductionType,
+  DeductionBracket,
+  PersonDeduction
 } from "./types";
 
 export type { DerivedHousehold } from "./selectors";
@@ -59,6 +63,7 @@ export {
   useOtherIncomes,
   useGoals,
   useFunds,
+  useDeductions,
   useSavingSummary,
   useDataStatus,
   useRefresh,
@@ -79,6 +84,7 @@ export {
   useOtherIncomeActions,
   useGoalActions,
   useFundActions,
+  useDeductionActions,
   useHouseholdSetup
 } from "./mutations";
 
@@ -86,7 +92,13 @@ export type { OtherIncomeDraft, GoalDraft, FundDraft } from "./mutations";
 
 export { previewHousehold } from "./api";
 
-export type { ExpenseInput, OtherIncomeInput, GoalInput, FundInput } from "./api";
+export type {
+  DeductionInput,
+  ExpenseInput,
+  OtherIncomeInput,
+  GoalInput,
+  FundInput
+} from "./api";
 
 export { derive };
 

@@ -6,7 +6,9 @@
  * pestañas con `BroadcastChannel` para simular el tiempo real de Supabase.
  */
 import { addMonths } from "../lib/month";
+import { lawDefaults } from "../lib/calc";
 import type {
+  Deduction,
   RawExpense,
   RawFund,
   RawGoal,
@@ -130,6 +132,7 @@ export const MOCK_SEED: Snapshot = {
     { id: "f2", memberId: "enrique", name: "Seguro de vida", pct: 20 },
     { id: "f3", memberId: "enrique", name: "Marca de ropa", pct: 40 }
   ],
+  deductions: lawDefaults(),
   month: M
 };
 
@@ -158,7 +161,8 @@ function normalize(s: Snapshot): Snapshot {
     ...s,
     otherIncomes: s.otherIncomes ?? [],
     goals: s.goals ?? [],
-    funds: s.funds ?? []
+    funds: s.funds ?? [],
+    deductions: s.deductions?.length ? s.deductions : lawDefaults()
   };
 }
 
@@ -357,6 +361,28 @@ class MockStore {
     this.commit({ ...this.state, funds: this.state.funds.filter((f) => f.id !== id) });
   }
 
+  /* ---------------- Descuentos (Fase 4) ---------------- */
+
+  addDeduction(input: Omit<Deduction, "id">) {
+    const deduction: Deduction = { ...input, id: uid() };
+    this.commit({ ...this.state, deductions: [...this.state.deductions, deduction] });
+  }
+
+  updateDeduction(id: string, patch: Partial<Deduction>) {
+    this.commit({
+      ...this.state,
+      deductions: this.state.deductions.map((d) => (d.id === id ? { ...d, ...patch } : d))
+    });
+  }
+
+  deleteDeduction(id: string) {
+    this.commit({ ...this.state, deductions: this.state.deductions.filter((d) => d.id !== id) });
+  }
+
+  setDeductions(deductions: Deduction[]) {
+    this.commit({ ...this.state, deductions });
+  }
+
   /* ---------------- Integrantes ---------------- */
 
   addMember(name: string, color: string): RawMember | null {
@@ -426,11 +452,11 @@ class MockStore {
       activity: [],
       otherIncomes: [],
       goals: [],
-      funds: []
+      funds: [],
+      deductions: lawDefaults()
     });
     return this.state.household.id;
   }
-
   /** Une a una persona «solo con su nombre». Devuelve `null` si está lleno. */
   joinByName(name: string, color: string): RawMember | null {
     return this.addMember(name, color);

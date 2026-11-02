@@ -6,13 +6,14 @@
 import { useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { addMonths, shortMonth } from "../lib/month";
-import { availableToSave, distributeFunds, round2, type FundSlice } from "../lib/calc";
+import { availableToSave, distributeFunds, lawDefaults, round2, type FundSlice } from "../lib/calc";
 import { useAuth } from "./auth";
 import { fetchSnapshot } from "./api";
 import { DEFAULT_MONTH, useDataContext, useRealtime } from "./provider";
 import { derive, type DerivedHousehold } from "./selectors";
 import type {
   Activity,
+  Deduction,
   Expense,
   Household,
   Person,
@@ -172,6 +173,14 @@ export function useFunds(): RawFund[] {
     () => (snapshot?.funds ?? []).filter((f) => f.memberId === memberId),
     [snapshot, memberId]
   );
+}
+
+/* ---------------- Fase 4: descuentos editables ---------------- */
+
+/** Descuentos configurables del hogar (o los de ley por defecto). */
+export function useDeductions(): Deduction[] {
+  const snapshot = useSnapshot().data;
+  return useMemo(() => snapshot?.deductions ?? lawDefaults(), [snapshot]);
 }
 
 export interface SavingSummary {

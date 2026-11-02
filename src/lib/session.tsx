@@ -33,6 +33,8 @@ const PLACEHOLDER: Person = {
   isssOn: false,
   isrOn: false,
   net: 0,
+  deductions: [],
+  deductionTotal: 0,
   sharePct: 0,
   shareAmount: 0,
   leftover: 0,

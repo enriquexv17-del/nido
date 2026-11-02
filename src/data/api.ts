@@ -7,7 +7,9 @@
  */
 import { mockStore } from "./mock.dev";
 import { isSupabaseConfigured, supabase } from "./supabase";
+import { lawDefaults, resetLawDeductions } from "../lib/calc";
 import type {
+  Deduction,
   ExpenseIcon,
   ExpenseType,
   RawExpense,
@@ -68,7 +70,7 @@ async function loadRealSnapshot(month: string): Promise<Snapshot> {
 
   const householdId = str(memberList[0].household_id);
 
-  const [householdRes, incomeRes, expenseRes, activityRes, otherIncomeRes, goalRes, fundRes] =
+  const [householdRes, incomeRes, expenseRes, activityRes, otherIncomeRes, goalRes, fundRes, deductionRes] =
     await Promise.all([
       client.from("households").select("*").eq("id", householdId).single(),
       client.from("income_entries").select("*").eq("month", month),
@@ -84,7 +86,8 @@ async function loadRealSnapshot(month: string): Promise<Snapshot> {
         .eq("month", month)
         .order("created_at", { ascending: true }),
       client.from("savings_goals").select("*").order("created_at", { ascending: true }),
-      client.from("savings_funds").select("*").order("created_at", { ascending: true })
+      client.from("savings_funds").select("*").order("created_at", { ascending: true }),
+      client.from("deductions").select("*").order("sort_order", { ascending: true })
     ]);
 
   const h = (householdRes.data ?? {}) as Row;
@@ -160,6 +163,26 @@ async function loadRealSnapshot(month: string): Promise<Snapshot> {
     note: str(f.note) || undefined
   }));
 
+  const deductionRows = (deductionRes.data ?? []) as Row[];
+  const deductions: Deduction[] = deductionRows.length
+    ? deductionRows.map((d) => ({
+        id: str(d.id),
+        key: str(d.key) || undefined,
+        name: str(d.name),
+        type: (str(d.type) as Deduction["type"]) || "percent",
+        value: num(d.value),
+        maxBase: d.max_base == null ? undefined : num(d.max_base),
+        cap: d.cap == null ? undefined : num(d.cap),
+        active: d.active !== false,
+        isLaw: bool(d.is_law),
+        order: num(d.sort_order),
+        brackets: Array.isArray(d.brackets)
+          ? (d.brackets as NonNullable<Deduction["brackets"]>)
+          : undefined,
+        verify: bool(d.verify)
+      }))
+    : lawDefaults();
+
   return {
     household: {
       id: householdId,
@@ -177,6 +200,7 @@ async function loadRealSnapshot(month: string): Promise<Snapshot> {
     otherIncomes,
     goals,
     funds,
+    deductions,
     month
   };
 }
@@ -497,6 +521,95 @@ export async function deleteFund(id: string): Promise<void> {
   }
   const { error } = await supabase.from("savings_funds").delete().eq("id", id);
   if (error) throw error;
+}
+
+/* ---------------- Fase 4: descuentos editables ---------------- */
+
+export type DeductionInput = Omit<Deduction, "id">;
+
+export async function createDeduction(input: DeductionInput): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().addDeduction(input);
+    return;
+  }
+  const householdId = await getHouseholdId();
+  const { error } = await supabase.from("deductions").insert({
+    household_id: householdId,
+    key: input.key ?? null,
+    name: input.name,
+    type: input.type,
+    value: input.value,
+    max_base: input.maxBase ?? null,
+    cap: input.cap ?? null,
+    active: input.active,
+    is_law: input.isLaw,
+    sort_order: input.order,
+    brackets: input.brackets ?? null,
+    verify: input.verify ?? false
+  });
+  if (error) throw error;
+}
+
+export async function updateDeduction(id: string, patch: Partial<Deduction>): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().updateDeduction(id, patch);
+    return;
+  }
+  const row: Row = {};
+  if (patch.key !== undefined) row.key = patch.key;
+  if (patch.name !== undefined) row.name = patch.name;
+  if (patch.type !== undefined) row.type = patch.type;
+  if (patch.value !== undefined) row.value = patch.value;
+  if (patch.maxBase !== undefined) row.max_base = patch.maxBase;
+  if (patch.cap !== undefined) row.cap = patch.cap;
+  if (patch.active !== undefined) row.active = patch.active;
+  if (patch.isLaw !== undefined) row.is_law = patch.isLaw;
+  if (patch.order !== undefined) row.sort_order = patch.order;
+  if (patch.brackets !== undefined) row.brackets = patch.brackets;
+  if (patch.verify !== undefined) row.verify = patch.verify;
+  const { error } = await supabase.from("deductions").update(row).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteDeduction(id: string): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().deleteDeduction(id);
+    return;
+  }
+  const { error } = await supabase.from("deductions").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/** Restablece los valores de ley y devuelve la lista resultante. */
+export async function resetLawValues(current: Deduction[]): Promise<Deduction[]> {
+  const next = resetLawDeductions(current);
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().setDeductions(next);
+    return next;
+  }
+  const householdId = await getHouseholdId();
+  for (const d of next.filter((x) => x.isLaw)) {
+    const { error } = await supabase.from("deductions").upsert(
+      {
+        id: d.id,
+        household_id: householdId,
+        key: d.key ?? null,
+        name: d.name,
+        type: d.type,
+        value: d.value,
+        max_base: d.maxBase ?? null,
+        cap: d.cap ?? null,
+        active: d.active,
+        is_law: d.isLaw,
+        sort_order: d.order,
+        brackets: d.brackets ?? null,
+        verify: d.verify ?? false
+      },
+      { onConflict: "id" }
+    );
+    if (error) throw error;
+  }
+  return next;
 }
 
 /* ---------------- Hogares ---------------- */
