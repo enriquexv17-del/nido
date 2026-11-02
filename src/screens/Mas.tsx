@@ -9,7 +9,7 @@ import { Dialog } from "../components/Dialog";
 import { DevSwitcher } from "../components/DevSwitcher";
 import { useSession } from "../lib/session";
 import { useAppUpdate } from "../lib/useAppUpdate";
-import { useAuth, useOtherIncomes, usePeople } from "../data";
+import { useAuth, useGoals, useOtherIncomes, usePeople } from "../data";
 import { formatUSD } from "../lib/format";
 
 interface Row {
@@ -30,6 +30,8 @@ export function Mas() {
   const { installed, hasUpdate } = useAppUpdate();
   const otherIncomes = useOtherIncomes();
   const extraTotal = otherIncomes.reduce((sum, o) => sum + o.amount, 0);
+  const goals = useGoals();
+  const goalsSaved = goals.reduce((sum, g) => sum + g.saved, 0);
   const [confirm, setConfirm] = useState<null | "signout" | "delete">(null);
   const [busy, setBusy] = useState(false);
 
@@ -78,6 +80,17 @@ export function Mas() {
       title: "Otros ingresos",
       sub: extraTotal > 0 ? `${formatUSD(extraTotal)} este mes` : "Sin ingresos extra",
       to: "/mas/otros-ingresos"
+    },
+    {
+      icon: "savings",
+      color: "#6A4BD8",
+      colorBg: "#ECE6FD",
+      title: "Ahorros y metas",
+      sub:
+        goals.length > 0
+          ? `${goals.length} ${goals.length === 1 ? "meta" : "metas"} · ${formatUSD(goalsSaved)}`
+          : "Sin metas todavía",
+      to: "/mas/ahorros"
     },
     {
       icon: "refresh",

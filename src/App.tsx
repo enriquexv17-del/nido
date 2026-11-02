@@ -19,6 +19,7 @@ import { Integrantes } from "./screens/Integrantes";
 import { Descuentos } from "./screens/Descuentos";
 import { Actualizaciones } from "./screens/Actualizaciones";
 import { OtrosIngresos } from "./screens/OtrosIngresos";
+import { Ahorros } from "./screens/Ahorros";
 
 /**
  * Transición de las pantallas de entrada. Se monta una sola vez por ruta
@@ -76,6 +77,7 @@ export default function App() {
               <Route path="/mas/integrantes" element={<Integrantes />} />
               <Route path="/mas/descuentos" element={<Descuentos />} />
               <Route path="/mas/otros-ingresos" element={<OtrosIngresos />} />
+              <Route path="/mas/ahorros" element={<Ahorros />} />
               <Route path="/mas/actualizaciones" element={<Actualizaciones />} />
             </Route>
 

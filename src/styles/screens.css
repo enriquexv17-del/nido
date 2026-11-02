@@ -1809,3 +1809,128 @@
   font-variant-numeric: tabular-nums;
   flex: none;
 }
+
+/* ============================================================
+   Fase 3 · Ahorros y metas
+   ============================================================ */
+
+.savings-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  padding: 0 2px;
+  margin-bottom: -4px;
+}
+
+.savings-list {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 2px;
+}
+
+.savings-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--soft-line);
+}
+
+.savings-row:last-child {
+  border-bottom: 0;
+}
+
+.savings-pct {
+  display: grid;
+  place-items: center;
+  min-width: 42px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--jade-l);
+  color: var(--jade-d);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+.savings-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.savings-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.savings-note {
+  font-size: 11.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.savings-amount {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+.goal-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 10px;
+}
+
+.goal-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.goal-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.goal-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.goal-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.goal-add {
+  align-self: flex-start;
+  margin-top: 10px;
+  padding-left: 0;
+  padding-right: 0;
+  color: var(--jade-d);
+}
