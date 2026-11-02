@@ -180,7 +180,8 @@
   font-weight: 600;
   background: var(--anil);
   color: #fff;
-  transition: filter 0.15s ease, background 0.15s ease;
+  transition: filter 0.15s ease, background 0.15s ease,
+    transform var(--dur-micro) var(--ease-spring);
 }
 
 .btn--block {
@@ -237,6 +238,7 @@
 
 .btn:active {
   filter: brightness(0.96);
+  transform: scale(0.97);
 }
 
 .btn:disabled {
@@ -254,6 +256,13 @@
   place-items: center;
   color: var(--muted);
   flex: none;
+  transition: transform var(--dur-micro) var(--ease-spring),
+    background var(--dur-micro) ease;
+}
+
+.icon-btn:active {
+  transform: scale(0.9);
+  background: var(--soft);
 }
 
 /* ---------- Campos ---------- */
@@ -372,6 +381,14 @@
   color: var(--muted);
   display: inline-flex;
   align-items: center;
+  transition: background-color var(--dur-micro) var(--ease-cine),
+    border-color var(--dur-micro) var(--ease-cine),
+    color var(--dur-micro) var(--ease-cine),
+    transform var(--dur-micro) var(--ease-spring);
+}
+
+.chip:active {
+  transform: scale(0.95);
 }
 
 .chip.is-active {
@@ -379,6 +396,7 @@
   border-color: var(--anil);
   color: #fff;
   font-weight: 600;
+  animation: nido-pop var(--dur-normal) var(--ease-cine);
 }
 
 .chip--maize {
@@ -513,9 +531,12 @@
 /* ---------- Aviso breve ---------- */
 .toast {
   position: fixed;
-  left: 50%;
+  left: 14px;
+  right: 14px;
   bottom: calc(env(safe-area-inset-bottom) + 92px);
-  transform: translateX(-50%);
+  margin: 0 auto;
+  width: fit-content;
+  max-width: 400px;
   background: var(--ink);
   color: #fff;
   font-size: 12.5px;
@@ -523,7 +544,6 @@
   border-radius: 12px;
   z-index: 80;
   box-shadow: var(--shadow-float);
-  animation: nido-toast 0.2s ease;
 }
 
 /* ---------- Barras de paso ---------- */

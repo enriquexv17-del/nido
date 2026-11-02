@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { m, SPRING_UI } from "../motion";
 
 export function Toast({
   message,
@@ -15,8 +16,15 @@ export function Toast({
   }, [message, duration, onDone]);
 
   return (
-    <div className="toast" role="status" aria-live="polite">
+    <m.div
+      className="toast"
+      role="status"
+      aria-live="polite"
+      initial={{ opacity: 0, y: 14, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={SPRING_UI}
+    >
       {message}
-    </div>
+    </m.div>
   );
 }
