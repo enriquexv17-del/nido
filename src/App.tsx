@@ -1,5 +1,7 @@
-import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
-import { NidoProvider } from "./data";
+import { HashRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { AnimatePresence, m } from "./motion";
+import { useScreenTransition } from "./motion/useScreenTransition";
+import { NidoProvider, RealtimeBridge } from "./data";
 import { SessionProvider } from "./lib/session";
 import { AppShell } from "./layout/AppShell";
 import { Welcome } from "./screens/Welcome";
@@ -17,18 +19,41 @@ import { Integrantes } from "./screens/Integrantes";
 import { Descuentos } from "./screens/Descuentos";
 import { Actualizaciones } from "./screens/Actualizaciones";
 
+/** Transición de las pantallas de entrada (bienvenida, cuenta, hogar...). */
+function EntryTransition() {
+  const { key, variants } = useScreenTransition();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <m.div
+        key={key}
+        className="screen-transition"
+        variants={variants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+      >
+        <Outlet />
+      </m.div>
+    </AnimatePresence>
+  );
+}
+
 export default function App() {
   return (
     <NidoProvider>
       <SessionProvider>
+        <RealtimeBridge />
         <HashRouter>
           <Routes>
             <Route path="/" element={<Navigate to="/bienvenida" replace />} />
-            <Route path="/bienvenida" element={<Welcome />} />
-            <Route path="/cuenta" element={<Cuenta />} />
-            <Route path="/hogar" element={<Hogar />} />
-            <Route path="/invitar" element={<Invitar />} />
-            <Route path="/unirme" element={<Unirme />} />
+
+            <Route element={<EntryTransition />}>
+              <Route path="/bienvenida" element={<Welcome />} />
+              <Route path="/cuenta" element={<Cuenta />} />
+              <Route path="/hogar" element={<Hogar />} />
+              <Route path="/invitar" element={<Invitar />} />
+              <Route path="/unirme" element={<Unirme />} />
+            </Route>
 
             <Route element={<AppShell />}>
               <Route path="/inicio" element={<Inicio />} />

@@ -3,6 +3,12 @@
    Solo transform/opacity. Respeta prefers-reduced-motion.
    ============================================================ */
 
+/* ---------- Contenedor de transición de pantalla ---------- */
+.screen-transition {
+  height: 100%;
+  will-change: transform, opacity;
+}
+
 /* ---------- Esqueleto de carga (shimmer por transform) ---------- */
 .skeleton {
   position: relative;
