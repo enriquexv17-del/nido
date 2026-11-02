@@ -195,6 +195,7 @@
   .drift,
   .drift--slow,
   .sheen,
+  .welcome-logo-sheen,
   .shake,
   .skeleton::after {
     animation: none !important;

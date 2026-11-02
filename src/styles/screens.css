@@ -385,6 +385,51 @@
   gap: 10px;
 }
 
+/* Logo con destello que recorre el arco maíz */
+.welcome-logo {
+  position: relative;
+  display: block;
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.welcome-logo-sheen {
+  position: absolute;
+  top: -30%;
+  left: 0;
+  width: 45%;
+  height: 160%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.75) 50%,
+    transparent 100%
+  );
+  transform: translateX(-160%) skewX(-20deg);
+  animation: nido-welcome-sheen 3.6s var(--ease-cine) 0.9s infinite;
+  pointer-events: none;
+}
+
+@keyframes nido-welcome-sheen {
+  0% {
+    transform: translateX(-160%) skewX(-20deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  45% {
+    transform: translateX(180%) skewX(-20deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(180%) skewX(-20deg);
+    opacity: 0;
+  }
+}
+
 /* ---------- Código de invitación ---------- */
 .invite-code-card {
   background: #fff;
