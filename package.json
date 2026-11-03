@@ -15,6 +15,7 @@
     "perf": "playwright test tests/perf.spec.ts",
     "lighthouse": "node scripts/lighthouse.mjs",
     "icons": "node scripts/gen-icons.mjs",
+    "rls:check": "node scripts/rls-check.mjs",
     "android:sync": "npm run build && cap sync android",
     "android:open": "cap open android",
     "android:build": "npm run build && cap sync android && cd android && gradlew.bat assembleRelease",
