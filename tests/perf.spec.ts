@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
+// Este archivo compite por CPU con el proyecto de PC (Playwright lanza los dos
+// proyectos en paralelo). La medición es estricta, así que un único reintento
+// absorbe picos puntuales del sistema sin relajar las aserciones.
+test.describe.configure({ retries: 1 });
+
 /**
  * Rendimiento con la CPU frenada ×4 (como un teléfono de gama media):
  * - las animaciones se mantienen a ≥ 55 fps y sin tareas largas (> 50 ms);

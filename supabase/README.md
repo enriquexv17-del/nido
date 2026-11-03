@@ -23,6 +23,8 @@ testeo.
 | 12 | `..._rpc_misc.sql` | `regenerate_code`, `copy_month`, `delete_my_account`. |
 | 13 | `..._realtime.sql` | Publicación Realtime de las tablas. |
 | 14 | `..._savings.sql` | `other_incomes`, `savings_goals`, `savings_funds` (personales) y su RLS. |
+| 15 | `..._deductions.sql` | Descuentos del hogar en `app_settings` (AFP, ISSS, Renta y personalizados). |
+| 16 | `..._split.sql` | Modo de reparto del hogar y sus valores manuales/fijos. |
 
 ## Cómo aplicarlas (etapa posterior)
 
@@ -45,6 +47,8 @@ modo demostración y usa el proyecto real.
 - Sueldos: los ve el hogar; los edita su dueño (o quien administra).
 - Gastos: los edita cualquier integrante del hogar.
 - Ingresos extra, metas y fondos: **personales**; cada quien ve y edita solo los suyos.
+- Descuentos y modo de reparto: son del hogar; los consulta cualquier integrante
+  y los edita quien administra.
 - Las funciones que necesitan escribir fuera de RLS corren como
   `security definer` (crear/unirse a hogar, copiar mes, borrar cuenta).
 - Realtime solo publica las tablas del hogar.

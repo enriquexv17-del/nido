@@ -10,8 +10,10 @@ test("las filas nuevas aparecen en Más", async ({ page }, testInfo) => {
 
   await page.goto("/#/mas");
   await page.waitForTimeout(800);
-  await expect(page.getByText("Otros ingresos", { exact: true })).toBeVisible();
-  await expect(page.getByText("Ahorros y metas", { exact: true })).toBeVisible();
+  // El menú lateral de PC tiene las mismas etiquetas: nos quedamos con la lista de «Más».
+  const list = page.locator(".settings-list").first();
+  await expect(list.getByText("Otros ingresos", { exact: true })).toBeVisible();
+  await expect(list.getByText("Ahorros y metas", { exact: true })).toBeVisible();
 });
 
 /**

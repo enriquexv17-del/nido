@@ -271,3 +271,118 @@ $127.01 / $63.50 / $127.01. La prueba de oro del hogar sigue exacta:
 | Ahorro automático | ✔ | fondos editables con monto calculado y aviso si suman > 100 % |
 | Metas con progreso | ✔ | «Aparta» por periodo y barra con `transform` |
 | Animación | ✔ | solo `transform`/`opacity`; reduced motion con fundidos de 120 ms |
+
+## Fase 4 · Ajustes funcionales, reparto configurable y apariencia (final)
+
+La app sigue funcionando en **modo demostración**, con los mismos datos de
+ejemplo y la misma prueba de oro. Lo nuevo se puede configurar sin tocar código.
+
+### Menú lateral de PC
+
+- «Otros ingresos» (`/mas/otros-ingresos`) y «Ahorros y metas» (`/mas/ahorros`)
+  pasan a ser elementos propios del menú lateral. En móvil siguen dentro de
+  «Más» y la barra inferior conserva sus **5 pestañas**.
+- Las rutas no cambian. Al estar en `/mas` no se resalta dos veces una sección.
+- Iconos rediseñados: ahorros es una **alcancía** y otros ingresos son **monedas**.
+- «Cerrar sesión» y «Eliminar cuenta» vuelven a ser botones de ancho completo con
+  borde correcto (el reset de estilos de `button` ya no los deja «pegados»).
+
+### Descuentos editables (`/mas/descuentos`)
+
+Los descuentos son **del hogar** y se guardan en `Snapshot.deductions`:
+
+| Campo | Uso |
+| --- | --- |
+| `name`, `order` | Nombre visible y orden de cálculo. |
+| `type` | `percent` (porcentaje), `fixed` (monto fijo) o `bracket` (tabla progresiva). |
+| `value` | Tasa (0.0725) o monto en dólares según el tipo. |
+| `maxBase`, `cap` | Base máxima y tope opcionales (ISSS: base $1,000 → tope $30). |
+| `active`, `isLaw`, `key` | Interruptor, si es de ley y clave estable `afp`/`isss`/`isr`. |
+| `brackets`, `verify` | Tramos de la tabla y marca «verificar». |
+
+Valores de ley por defecto:
+
+- **AFP:** 7.25 %, base máxima cotizable $7,045.06 (marcada «verificar»).
+- **ISSS:** 3 % con base máxima $1,000 y tope de $30 al mes.
+- **Renta (ISR):** hasta $550 exento; $550.01–$895.24 → 10 % del exceso sobre
+  $550 + $17.67; $895.25–$2,038.10 → 20 % del exceso sobre $895.24 + $60.00;
+  más de $2,038.10 → 30 % del exceso sobre $2,038.10 + $288.57.
+- La base de Renta es **bruto − AFP − ISSS**.
+- Nota visible: «Valores revisados en nov 2026; confirma con Hacienda o tu patrono».
+
+La pantalla permite encender/apagar, editar, eliminar, **agregar descuento**,
+editar los tramos de una tabla y **restablecer los valores de ley**. Los netos y
+el reparto se recalculan en Inicio, Ingresos, Gastos, Reparto y Ahorros.
+
+Los descuentos de ley respetan además el interruptor personal que ya existía
+(`afpOn`/`isssOn`/`isrOn`), de modo que los datos de ejemplo conservan sus netos.
+Los descuentos personalizados activos se aplican a todos los integrantes.
+
+### Cómo se reparte (`/reparto`)
+
+Se elige y **se guarda** en `Snapshot.split`:
+
+| Modo | Cálculo |
+| --- | --- |
+| Según sueldo (por defecto) | Proporcional al sueldo **neto** (peso `netWeight`). |
+| Partes iguales | Cada gasto se divide en partes iguales entre sus participantes. |
+| % manual | Porcentajes por integrante; deben sumar 100 %. |
+| Monto fijo | Monto mensual por integrante. |
+
+Antes de guardar se muestra una **vista previa** con los datos actuales. La
+pantalla de detalle usa el mismo modo persistido. En todos los casos cada gasto
+suma exactamente su monto.
+
+### Apariencia (`/mas/apariencia`)
+
+- **Modo:** Claro, Oscuro o Automático (sigue al sistema en caliente).
+- **Acento:** índigo (actual), verde, rosa, naranja, turquesa y morado. Se aplican
+  con variables CSS sobre `--anil*`; en modo oscuro usan tonos claros y un
+  `--anil-solid` más profundo para que el texto blanco de botones y píldoras
+  mantenga contraste AA.
+- Es una preferencia **del dispositivo**: `nido.theme.mode` y `nido.theme.accent`
+  en `localStorage`, aplicadas como `data-theme`/`data-accent` en `<html>`.
+- Un script en `index.html` aplica el tema antes de pintar (sin destello claro) y
+  las metas `theme-color` acompañan al modo.
+
+### Datos, cálculo y migraciones
+
+- `src/data/types.ts`: `Snapshot.deductions` y `Snapshot.split`; `Person.deductions`
+  y `deductionTotal` para el detalle por persona.
+- `src/lib/calc/settings.ts`: modelo `Deduction`, `DEFAULT_DEDUCTIONS` y
+  `lawDefaults()`. `calcDeductions` y `resetLawDeductions` en `src/lib/calc`.
+- `src/lib/calc/index.ts`: `SplitMode` (`salary`/`equal`/`manual`/`fixed`),
+  `calcShares(..., customWeights)` y `splitConfig`.
+- `src/lib/calc/balance.ts`: `balanceToIdeal(..., idealOverride)` para los modos
+  manual y fijo (misma doble restricción: filas y columnas exactas).
+- Mock (`mock.dev.ts`), API, consultas, mutaciones y `selectors.ts` leen y
+  guardan descuentos y reparto; `normalize()` completa datos guardados antes.
+- Migraciones `20260101000015_deductions.sql` y `20260101000016_split.sql`
+  **escritas y no aplicadas**.
+
+### Pasos de trabajo (y commits)
+
+| Paso | Descripción | Estado |
+| --- | --- | --- |
+| 1 | Menú lateral de PC, iconos y botones de cuenta | ✔ |
+| 2 | Modelo y cálculo de descuentos editables + Vitest | ✔ |
+| 3 | Capa de datos, pantalla de descuentos y migración SQL | ✔ |
+| 4 | Cuatro modos de reparto con vista previa y persistencia | ✔ |
+| 5 | Apariencia (modo y acento) con tokens de tema | ✔ |
+| 6 | Pruebas Playwright, capturas y documentación | ✔ |
+
+### Verificación de la Fase 4
+
+| Requisito | Estado | Nota |
+| --- | --- | --- |
+| `npm run build` limpio (`strict: true`) | ✔ | sin errores ni avisos |
+| Pruebas unitarias (Vitest) | ✔ | 48 en verde (25 de cálculo, 7 de descuentos, 4 de reparto, 12 de ahorro) |
+| Playwright (móvil y PC) | ✔ | 48 pasan, 20 omitidos (una vez basta) |
+| Cero errores/avisos de consola | ✔ | incluye `/mas/apariencia` |
+| Accesibilidad básica | ✔ | `h1` único, botones con nombre, campos con etiqueta |
+| Contraste AA en modo oscuro | ✔ | verificado en las 12 pantallas con los 6 acentos |
+| Prueba de oro intacta | ✔ | netos 359.00 / 493.62 / 450.00; reparto 146.48 / 201.41 / 183.61; gastos $531.50 |
+| Descuentos editables | ✔ | ISSS apagado: Enrique $371.00 y Joaquín $510.12; descuento fijo de $50: Enrique $321.00 |
+| Reparto configurable | ✔ | proporcional, partes iguales, % manual 50/30/20 = 265.75 / 159.45 / 106.30 y monto fijo |
+| Apariencia persistente | ✔ | recarga conserva modo y acento |
+| Capturas | ✔ | `capturas-fase4/` (claro, oscuro y 6 acentos; no se versiona) |
