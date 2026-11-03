@@ -17,8 +17,9 @@ Guía para conectar la app real. **No necesitas pegar contraseñas ni la
 1. Abre **SQL Editor → New query**.
 2. Abre el archivo [`all_migrations.sql`](./all_migrations.sql) de este repo.
 3. Copia **todo** su contenido, pégalo en el editor y pulsa **Run**.
-4. Debe terminar sin errores. El script crea las 16 migraciones en orden:
-   tablas, funciones, disparadores, RLS, Realtime y los datos de ley.
+4. Debe terminar sin errores. El script crea las 17 migraciones en orden:
+   tablas, funciones, disparadores, RLS, Realtime, los datos de ley y el
+   endurecimiento de seguridad.
 
 > ⚠️ Ejecútalo **una sola vez** en un proyecto vacío. Si lo vuelves a correr,
 > fallará en `create table` porque las tablas ya existen (no borra nada).
@@ -44,6 +45,16 @@ alter table public.savings_goals enable row level security;
 alter table public.savings_funds enable row level security;
 alter table public.deductions  enable row level security;
 ```
+
+### Si ya tienes aplicadas las migraciones 1–16 (endurecimiento)
+
+No vuelvas a correr `all_migrations.sql`. Ejecuta **solo** el archivo
+[`migrations/20260101000017_hardening.sql`](./migrations/20260101000017_hardening.sql)
+en el SQL Editor. Cierra la edición de los ajustes globales, limita quién puede
+cambiar el rol o el `user_id` de un integrante, deja la actividad solo en manos
+de los disparadores, alarga los códigos de hogar a 8 caracteres y recorta los
+permisos de las funciones. No borra ni reescribe datos. Detalles en
+[`RLS.md`](./RLS.md).
 
 ## 3. Configurar autenticación
 
