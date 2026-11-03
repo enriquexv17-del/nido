@@ -6,6 +6,7 @@ import { IconSquare } from "../components/IconSquare";
 import { Avatar } from "../components/Avatar";
 import { Button } from "../components/Button";
 import { Dialog } from "../components/Dialog";
+import { Toast } from "../components/Toast";
 import { DevSwitcher } from "../components/DevSwitcher";
 import { useSession } from "../lib/session";
 import { useAppUpdate } from "../lib/useAppUpdate";
@@ -38,6 +39,7 @@ export function Mas() {
   const goalsSaved = goals.reduce((sum, g) => sum + g.saved, 0);
   const [confirm, setConfirm] = useState<null | "signout" | "delete">(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const modeLabel = THEME_MODES.find((m) => m.value === mode)?.label ?? "Automático";
   const accentLabel = ACCENTS.find((a) => a.id === accent)?.label ?? "Índigo";
@@ -132,10 +134,17 @@ export function Mas() {
 
   async function onConfirm() {
     setBusy(true);
+    setError(null);
     try {
       if (confirm === "delete") await deleteAccount();
       else await signOut();
       navigate("/bienvenida");
+    } catch {
+      setError(
+        confirm === "delete"
+          ? "No pudimos eliminar tu cuenta. Intenta de nuevo."
+          : "No pudimos cerrar sesión. Intenta de nuevo."
+      );
     } finally {
       setBusy(false);
       setConfirm(null);
@@ -198,6 +207,8 @@ export function Mas() {
       </div>
 
       <DevSwitcher />
+
+      {error ? <Toast message={error} onDone={() => setError(null)} /> : null}
 
       <Dialog open={confirm !== null} onClose={() => (busy ? null : setConfirm(null))}>
         <span className="dialog-icon">
