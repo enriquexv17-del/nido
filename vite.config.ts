@@ -11,32 +11,49 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
+      // "prompt": la app avisa cuando hay una versión nueva y la instala desde
+      // la pantalla Actualizaciones (no recarga sola a mitad de una edición).
+      registerType: "prompt",
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2,ico,json}"]
+        // `version.json` NO se precachea: se pide siempre por red para saber
+        // cuál es la última versión publicada.
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2,woff,ico}"],
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            urlPattern: /\/version\.json$/,
+            handler: "NetworkOnly"
+          }
+        ]
       },
       manifest: {
-        name: "Nido",
+        id: "./",
+        name: "Nido · Gastos del hogar",
         short_name: "Nido",
         description: "Sueldos y gastos del hogar, repartidos justo.",
         lang: "es-SV",
+        dir: "ltr",
         display: "standalone",
+        display_override: ["standalone", "minimal-ui"],
         orientation: "portrait",
         theme_color: "#18205F",
         background_color: "#F3F4FA",
         start_url: "./",
         scope: "./",
+        categories: ["finance", "productivity"],
         icons: [
           {
             src: "icons/pwa-192x192.png",
             sizes: "192x192",
-            type: "image/png"
+            type: "image/png",
+            purpose: "any"
           },
           {
             src: "icons/pwa-512x512.png",
             sizes: "512x512",
-            type: "image/png"
+            type: "image/png",
+            purpose: "any"
           },
           {
             src: "icons/maskable-512x512.png",

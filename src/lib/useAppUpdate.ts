@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { APP_VERSION } from "./appInfo";
+import { usePwaNeedRefresh } from "./pwa";
 
 interface VersionFile {
   version: string;
@@ -32,6 +33,8 @@ export interface AppUpdate {
   latest: string;
   notes: string[];
   hasUpdate: boolean;
+  /** `true` cuando el service worker tiene una versión nueva esperando. */
+  pending: boolean;
   checking: boolean;
   checkedAt: Date | null;
   check: () => void;
@@ -39,7 +42,8 @@ export interface AppUpdate {
 
 /**
  * Estado de actualización: compara la versión instalada (package.json) con la
- * publicada (version.json) y expone cuándo se revisó por última vez.
+ * publicada (version.json) y escucha al service worker. `hasUpdate` es `true`
+ * si hay una versión nueva publicada o un service worker esperando.
  */
 export function useAppUpdate(): AppUpdate {
   const { data, dataUpdatedAt, isFetching, refetch } = useQuery({
@@ -53,13 +57,16 @@ export function useAppUpdate(): AppUpdate {
     void refetch();
   }, [refetch]);
 
+  const pending = usePwaNeedRefresh();
   const latest = data?.version ?? APP_VERSION;
+  const newer = compareVersions(latest, APP_VERSION) > 0;
 
   return {
     installed: APP_VERSION,
     latest,
     notes: data?.notes ?? [],
-    hasUpdate: compareVersions(latest, APP_VERSION) > 0,
+    hasUpdate: newer || pending,
+    pending,
     checking: isFetching,
     checkedAt: dataUpdatedAt ? new Date(dataUpdatedAt) : null,
     check

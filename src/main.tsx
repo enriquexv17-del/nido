@@ -1,6 +1,5 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { registerSW } from "virtual:pwa-register";
 
 import "@fontsource/poppins/300.css";
 import "@fontsource/poppins/400.css";
@@ -16,6 +15,7 @@ import "./styles/motion.css";
 
 import { MotionRoot } from "./motion";
 import { ThemeProvider } from "./lib/theme";
+import { initPWA } from "./lib/pwa";
 import App from "./App";
 
 // Bloquea el zoom accidental por doble toque (iOS).
@@ -30,7 +30,7 @@ document.addEventListener(
   { passive: false }
 );
 
-registerSW({ immediate: true });
+initPWA();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

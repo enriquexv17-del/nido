@@ -15,7 +15,8 @@ const DOWNLOAD_MS = 2600;
  * simulada) y el botón instala la PWA (recarga con el service worker nuevo).
  */
 export function Actualizaciones() {
-  const { installed, latest, notes, hasUpdate, checking, checkedAt, check } = useAppUpdate();
+  const { installed, latest, notes, hasUpdate, pending, checking, checkedAt, check } =
+    useAppUpdate();
   const reduced = useReducedMotion();
   const [progress, setProgress] = useState(0);
   const [applying, setApplying] = useState(false);
@@ -25,7 +26,8 @@ export function Actualizaciones() {
       setProgress(0);
       return;
     }
-    if (reduced) {
+    // Si el service worker ya tiene la versión nueva, no hay nada que simular.
+    if (pending || reduced) {
       setProgress(100);
       return;
     }
@@ -38,7 +40,7 @@ export function Actualizaciones() {
       if (p >= 100) window.clearInterval(id);
     }, 120);
     return () => window.clearInterval(id);
-  }, [hasUpdate, reduced, latest]);
+  }, [hasUpdate, pending, reduced, latest]);
 
   const ready = hasUpdate && progress >= 100;
   const firstLoad = checking && !checkedAt;
