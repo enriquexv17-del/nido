@@ -240,6 +240,23 @@ export function useDeductionActions() {
 }
 
 /**
+ * Carga el hogar con datos de ejemplo. Es opcional: el hogar real arranca
+ * vacío y este botón solo aparece mientras no haya nada que mostrar.
+ */
+export function useSampleActions() {
+  const { month } = useDataContext();
+  const actor = useActor();
+  const invalidate = useInvalidate();
+
+  const seed = useMutation({
+    mutationFn: () => api.seedSampleData(month, actor),
+    onSuccess: invalidate
+  });
+
+  return { seedSample: seed.mutateAsync, isSaving: seed.isPending };
+}
+
+/**
  * Guarda la configuración de reparto del hogar.
  */
 export function useSplitActions() {

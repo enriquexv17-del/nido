@@ -3,6 +3,9 @@ import { expect, test } from "@playwright/test";
 const ROUTES = [
   "/bienvenida",
   "/cuenta",
+  "/entrar",
+  "/recuperar",
+  "/restablecer",
   "/hogar",
   "/invitar",
   "/unirme",

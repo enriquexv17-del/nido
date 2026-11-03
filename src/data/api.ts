@@ -8,6 +8,7 @@
 import { mockStore } from "./mock.dev";
 import { isSupabaseConfigured, supabase } from "./supabase";
 import { lawDefaults, resetLawDeductions } from "../lib/calc";
+import { sampleExpenses, sampleGoal, sampleIncome, sampleOtherIncome } from "./sample";
 import type {
   Deduction,
   ExpenseIcon,
@@ -32,6 +33,43 @@ export interface Actor {
 }
 
 const PALETTE = ["--p1", "--p2", "--p3"];
+
+/** Identificador local para filas con `id text` (descuentos y ejemplos). */
+function uid(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return `id-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  }
+}
+
+/**
+ * Hogar vacío. Se usa cuando la cuenta todavía no pertenece a ningún hogar:
+ * la app muestra la guía para crear uno en lugar de una pantalla de error.
+ */
+function emptySnapshot(month: string): Snapshot {
+  return {
+    household: {
+      id: "",
+      name: "",
+      code: "",
+      currency: "US$",
+      monthLabel: "",
+      totalNet: 0,
+      totalExpenses: 0
+    },
+    members: [],
+    incomes: [],
+    expenses: [],
+    activity: [],
+    otherIncomes: [],
+    goals: [],
+    funds: [],
+    deductions: lawDefaults(),
+    split: { ...DEFAULT_SPLIT },
+    month
+  };
+}
 
 /* ============================================================
    Lectura
@@ -65,10 +103,13 @@ function arr(v: unknown): string[] {
 async function loadRealSnapshot(month: string): Promise<Snapshot> {
   const client = supabase!;
 
-  const { data: memberRows, error: memberError } = await client.from("members").select("*");
+  const { data: memberRows, error: memberError } = await client
+    .from("members")
+    .select("*")
+    .order("position", { ascending: true });
   if (memberError) throw memberError;
   const memberList = (memberRows ?? []) as Row[];
-  if (memberList.length === 0) throw new Error("SIN_HOGAR");
+  if (memberList.length === 0) return emptySnapshot(month);
 
   const householdId = str(memberList[0].household_id);
 
@@ -548,6 +589,7 @@ export async function createDeduction(input: DeductionInput): Promise<void> {
   }
   const householdId = await getHouseholdId();
   const { error } = await supabase.from("deductions").insert({
+    id: uid(),
     household_id: householdId,
     key: input.key ?? null,
     name: input.name,
@@ -603,25 +645,34 @@ export async function resetLawValues(current: Deduction[]): Promise<Deduction[]>
   }
   const householdId = await getHouseholdId();
   for (const d of next.filter((x) => x.isLaw)) {
-    const { error } = await supabase.from("deductions").upsert(
-      {
-        id: d.id,
-        household_id: householdId,
-        key: d.key ?? null,
-        name: d.name,
-        type: d.type,
-        value: d.value,
-        max_base: d.maxBase ?? null,
-        cap: d.cap ?? null,
-        active: d.active,
-        is_law: d.isLaw,
-        sort_order: d.order,
-        brackets: d.brackets ?? null,
-        verify: d.verify ?? false
-      },
-      { onConflict: "id" }
+    const row = {
+      household_id: householdId,
+      key: d.key ?? null,
+      name: d.name,
+      type: d.type,
+      value: d.value,
+      max_base: d.maxBase ?? null,
+      cap: d.cap ?? null,
+      active: d.active,
+      is_law: d.isLaw,
+      sort_order: d.order,
+      brackets: d.brackets ?? null,
+      verify: d.verify ?? false
+    };
+    // Los descuentos de ley ya viven en la base con id `law-<clave>-<hogar>`.
+    // Actualizamos esa fila (por `key`) en lugar de insertar un id nuevo, que
+    // chocaría con la clave única `(household_id, key)`.
+    const existing = current.find(
+      (c) => c.isLaw && (c.id === d.id || (c.key != null && c.key === d.key))
     );
-    if (error) throw error;
+    if (existing) {
+      const { error } = await supabase.from("deductions").update(row).eq("id", existing.id);
+      if (error) throw error;
+    } else {
+      const id = d.key ? `law-${d.key}-${householdId}` : uid();
+      const { error } = await supabase.from("deductions").insert({ ...row, id });
+      if (error) throw error;
+    }
   }
   return next;
 }
@@ -689,12 +740,95 @@ export async function getHouseholdId(): Promise<string> {
     cachedHouseholdId = mockStore().get().household.id;
     return cachedHouseholdId;
   }
-  const { data, error } = await supabase.from("members").select("household_id").limit(1).single();
+  const { data, error } = await supabase
+    .from("members")
+    .select("household_id")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
   if (error) throw error;
+  if (!data) throw new Error("SIN_HOGAR: primero crea tu hogar");
   cachedHouseholdId = str((data as Row).household_id);
   return cachedHouseholdId;
 }
 
 export function clearHouseholdCache() {
   cachedHouseholdId = null;
+}
+
+/* ---------------- Datos de ejemplo (hogar nuevo) ---------------- */
+
+/**
+ * Carga un hogar recién creado con un sueldo, gastos, un ingreso extra y una
+ * meta para poder probar la app. Es opcional: el hogar real arranca vacío.
+ * No toca otros hogares y se puede llamar una sola vez por mes y persona.
+ */
+export async function seedSampleData(month: string, actor: Actor): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    mockStore().seedSample(month, actor.name, actor.id);
+    return;
+  }
+  const householdId = await getHouseholdId();
+
+  const { data: memberRows, error: memberError } = await supabase
+    .from("members")
+    .select("id")
+    .eq("household_id", householdId);
+  if (memberError) throw memberError;
+  const memberIds = ((memberRows ?? []) as Row[]).map((m) => str(m.id)).filter(Boolean);
+  const audience = memberIds.length ? memberIds : [actor.id];
+
+  const income = sampleIncome(actor.id, month);
+  const { error: incomeError } = await supabase.from("income_entries").upsert(
+    {
+      household_id: householdId,
+      member_id: income.memberId,
+      month: income.month,
+      gross: income.gross,
+      afp_on: income.afpOn,
+      isss_on: income.isssOn,
+      isr_on: income.isrOn
+    },
+    { onConflict: "household_id,member_id,month" }
+  );
+  if (incomeError) throw incomeError;
+
+  const { error: expenseError } = await supabase.from("expenses").insert(
+    sampleExpenses(month, audience).map((e) => ({
+      household_id: householdId,
+      name: e.name,
+      icon: e.icon,
+      type: e.type,
+      amount: e.amount,
+      per_day: e.perDay ?? null,
+      days: e.days ?? null,
+      member_ids: e.memberIds,
+      month: e.month
+    }))
+  );
+  if (expenseError) throw expenseError;
+
+  const extra = sampleOtherIncome(actor.id, month);
+  const { error: otherError } = await supabase.from("other_incomes").insert({
+    household_id: householdId,
+    member_id: extra.memberId,
+    month: extra.month,
+    source: extra.source,
+    note: extra.note,
+    amount: extra.amount,
+    day: extra.day ?? null
+  });
+  if (otherError) throw otherError;
+
+  const goal = sampleGoal(actor.id);
+  const { error: goalError } = await supabase.from("savings_goals").insert({
+    household_id: householdId,
+    member_id: goal.memberId,
+    name: goal.name,
+    target: goal.target,
+    saved: goal.saved,
+    frequency: goal.frequency,
+    due_month: goal.dueMonth ?? null
+  });
+  if (goalError) throw goalError;
 }

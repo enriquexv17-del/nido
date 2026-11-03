@@ -1,14 +1,61 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { Avatar, YouTag } from "../components/Avatar";
 import { StackedBar } from "../components/StackedBar";
 import { IconSquare } from "../components/IconSquare";
 import { CountUp } from "../components/CountUp";
+import { Button } from "../components/Button";
+import { Toast } from "../components/Toast";
 import { formatPct, formatUSD } from "../lib/format";
-import { useActivity, useDataStatus, useExpenses, useHousehold, usePeople, useRefresh } from "../data";
+import {
+  useActivity,
+  useDataStatus,
+  useExpenses,
+  useHousehold,
+  usePeople,
+  useRefresh,
+  useSampleActions
+} from "../data";
 import { useSession } from "../lib/session";
 import { EmptyState, ErrorState, ScreenSkeleton } from "../components/States";
 import { AnimatePresence, m, DUR, EASE_CINE, SPRING_POP, SPRING_UI } from "../motion";
+
+/** Aviso para el hogar recién creado, con el botón de datos de ejemplo. */
+function FreshHomeCard() {
+  const { seedSample, isSaving } = useSampleActions();
+  const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSeed() {
+    setError(null);
+    try {
+      await seedSample();
+      setToast("Datos de ejemplo cargados");
+    } catch {
+      setError("No pudimos cargar el ejemplo. Intenta de nuevo.");
+    }
+  }
+
+  return (
+    <section className="card fresh-home">
+      <h2 className="card-title">Tu hogar está listo</h2>
+      <p className="screen-sub">
+        Aún no hay sueldos ni gastos este mes. Anótalos cuando quieras, o carga un
+        ejemplo para ver cómo funciona la app.
+      </p>
+      <Button block variant="outline" disabled={isSaving} onClick={onSeed}>
+        {isSaving ? "Cargando..." : "Cargar datos de ejemplo"}
+      </Button>
+      {error ? (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {toast ? <Toast message={toast} onDone={() => setToast(null)} /> : null}
+    </section>
+  );
+}
 
 export function Inicio() {
   const household = useHousehold();
@@ -76,6 +123,10 @@ export function Inicio() {
   const status = useDataStatus();
   const refresh = useRefresh();
 
+  const hasHousehold = household.id !== "";
+  const freshHome =
+    hasHousehold && expenses.length === 0 && people.every((p) => p.gross === 0);
+
   if (status === "loading") return <ScreenSkeleton cards={3} />;
   if (status === "error") return <ErrorState onRetry={refresh} />;
   if (status === "empty") {
@@ -84,8 +135,16 @@ export function Inicio() {
         <EmptyState
           icon="users"
           title="Aún no hay un hogar"
-          text="Crea o únete a un hogar para ver cuánto te toca este mes."
+          text="Crea tu hogar o únete al de alguien más con un código para ver cuánto te toca este mes."
         />
+        <div className="empty-actions">
+          <Link to="/hogar" className="btn btn--maize btn--block">
+            Crear mi hogar
+          </Link>
+          <Link to="/unirme" className="btn btn--outline btn--block">
+            Ya tengo un código
+          </Link>
+        </div>
       </div>
     );
   }
@@ -127,6 +186,8 @@ export function Inicio() {
             ))}
           </div>
         </header>
+
+        {freshHome ? <FreshHomeCard /> : null}
 
         <section className="hero">
           <span className="hero-glow glow" aria-hidden="true" />
@@ -226,6 +287,8 @@ export function Inicio() {
             Sincronizado · ahora
           </span>
         </header>
+
+        {freshHome ? <FreshHomeCard /> : null}
 
         <div className="desk-stats">
           <div className="desk-stat desk-stat--hero">

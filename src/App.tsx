@@ -1,4 +1,13 @@
-import { HashRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import {
+  HashRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate
+} from "react-router-dom";
 import { m } from "./motion";
 import { useScreenTransition } from "./motion/useScreenTransition";
 import { NidoProvider, RealtimeBridge, useAuth } from "./data";
@@ -6,6 +15,9 @@ import { SessionProvider } from "./lib/session";
 import { AppShell } from "./layout/AppShell";
 import { Welcome } from "./screens/Welcome";
 import { Cuenta } from "./screens/Cuenta";
+import { Entrar } from "./screens/Entrar";
+import { Recuperar } from "./screens/Recuperar";
+import { Restablecer } from "./screens/Restablecer";
 import { Hogar } from "./screens/Hogar";
 import { Invitar } from "./screens/Invitar";
 import { Unirme } from "./screens/Unirme";
@@ -43,6 +55,27 @@ function EntryTransition() {
   );
 }
 
+/**
+ * El enlace de recuperación vuelve como `.../?recuperar=1` (antes del `#`).
+ * Lo limpiamos de la barra y abrimos la pantalla para la contraseña nueva.
+ */
+function RecoveryGate() {
+  const navigate = useNavigate();
+  const { loading } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("recuperar") !== "1") return;
+    params.delete("recuperar");
+    const query = params.toString();
+    const clean = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", clean);
+    if (!loading) navigate("/restablecer", { replace: true });
+  }, [loading, navigate]);
+
+  return null;
+}
+
 /** Rutas de la app: sin sesión no se entra (vuelve a la bienvenida). */
 function RequireSession() {
   const { user, loading } = useAuth();
@@ -57,12 +90,16 @@ export default function App() {
       <SessionProvider>
         <RealtimeBridge />
         <HashRouter>
+          <RecoveryGate />
           <Routes>
             <Route path="/" element={<Navigate to="/bienvenida" replace />} />
 
             <Route element={<EntryTransition />}>
               <Route path="/bienvenida" element={<Welcome />} />
               <Route path="/cuenta" element={<Cuenta />} />
+              <Route path="/entrar" element={<Entrar />} />
+              <Route path="/recuperar" element={<Recuperar />} />
+              <Route path="/restablecer" element={<Restablecer />} />
               <Route path="/hogar" element={<Hogar />} />
               <Route path="/invitar" element={<Invitar />} />
               <Route path="/unirme" element={<Unirme />} />

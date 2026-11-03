@@ -8,6 +8,7 @@
 import { addMonths } from "../lib/month";
 import { lawDefaults } from "../lib/calc";
 import { DEFAULT_SPLIT } from "./types";
+import { sampleExpenses, sampleGoal, sampleIncome, sampleOtherIncome } from "./sample";
 import type {
   Deduction,
   RawExpense,
@@ -469,6 +470,33 @@ class MockStore {
   /** Une a una persona «solo con su nombre». Devuelve `null` si está lleno. */
   joinByName(name: string, color: string): RawMember | null {
     return this.addMember(name, color);
+  }
+
+  /** Carga el hogar con datos de ejemplo (botón opcional del hogar nuevo). */
+  seedSample(month: string, actorName: string, actorId: string) {
+    const memberIds = this.state.members.map((m) => m.id);
+    const now = new Date().toISOString();
+
+    const incomes = [
+      ...this.state.incomes.filter((i) => i.month !== month),
+      sampleIncome(actorId, month)
+    ];
+    const expenses = [
+      ...this.state.expenses.filter((e) => e.month !== month),
+      ...sampleExpenses(month, memberIds).map((e) => ({ ...e, id: uid() }))
+    ];
+    const otherIncomes: RawOtherIncome[] = [
+      ...this.state.otherIncomes,
+      { ...sampleOtherIncome(actorId, month), id: uid(), createdAt: now }
+    ];
+    const goals: RawGoal[] = [
+      ...this.state.goals,
+      { ...sampleGoal(actorId), id: uid(), createdAt: now }
+    ];
+
+    let s: Snapshot = { ...this.state, incomes, expenses, otherIncomes, goals };
+    s = this.pushActivity(s, actorId, "plus", `${actorName} cargó datos de ejemplo`, "ahora");
+    this.commit(s);
   }
 
   setMonth(month: string) {

@@ -52,6 +52,9 @@ export function Welcome() {
           <Link to="/unirme" className="btn btn--outline btn--block">
             Ya tengo un código
           </Link>
+          <Link to="/entrar" className="welcome-login">
+            Iniciar sesión
+          </Link>
         </m.div>
       </m.div>
     </div>

@@ -1,22 +1,14 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { EntryScreen } from "../layout/EntryShell";
+import { Link, useNavigate } from "react-router-dom";
+import { EntryScreen, EntryShell } from "../layout/EntryShell";
 import { Field } from "../components/Field";
 import { Button } from "../components/Button";
 import { Icon } from "../components/Icon";
 import { Toast } from "../components/Toast";
+import { authError } from "../lib/authErrors";
 import { useAuth } from "../data";
 
-/** Traduce los errores de Supabase a algo claro en español. */
-function cuentaError(message: string): string {
-  const m = message.toLowerCase();
-  if (m.includes("invalid login")) return "Correo o contraseña incorrectos.";
-  if (m.includes("already registered") || m.includes("already been registered"))
-    return "Ese correo ya tiene una cuenta. Inicia sesión.";
-  if (m.includes("password")) return "La contraseña debe tener al menos 6 caracteres.";
-  if (m.includes("email")) return "Escribe un correo válido.";
-  return "No pudimos crear tu cuenta. Intenta de nuevo.";
-}
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 export function Cuenta() {
   const navigate = useNavigate();
@@ -27,6 +19,7 @@ export function Cuenta() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmEmail, setConfirmEmail] = useState(false);
 
   async function onContinue() {
     setError(null);
@@ -34,7 +27,7 @@ export function Cuenta() {
       setError("Escribe tu nombre.");
       return;
     }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    if (!EMAIL_RE.test(email)) {
       setError("Escribe un correo válido.");
       return;
     }
@@ -45,10 +38,15 @@ export function Cuenta() {
     setBusy(true);
     try {
       setSignUpName(name.trim());
-      await signUp(email.trim(), password, name.trim());
+      const result = await signUp(email.trim(), password, name.trim());
+      // Si Supabase exige confirmar el correo, todavía no hay sesión.
+      if (result.needsConfirmation) {
+        setConfirmEmail(true);
+        return;
+      }
       navigate("/hogar");
     } catch (e) {
-      setError(cuentaError(e instanceof Error ? e.message : ""));
+      setError(authError(e instanceof Error ? e.message : ""));
     } finally {
       setBusy(false);
     }
@@ -63,8 +61,33 @@ export function Cuenta() {
     try {
       await signInWithGoogle();
     } catch (e) {
-      setError(cuentaError(e instanceof Error ? e.message : ""));
+      setError(authError(e instanceof Error ? e.message : ""));
     }
+  }
+
+  if (confirmEmail) {
+    return (
+      <EntryShell>
+        <div className="entry-screen">
+          <header className="entry-head">
+            <h1 className="screen-title">Revisa tu correo</h1>
+            <p className="screen-sub">
+              Te enviamos un enlace a {email.trim()} para confirmar tu cuenta.
+            </p>
+          </header>
+          <div className="entry-body">
+            <p className="join-hint">
+              Cuando la confirmes, vuelve aquí e inicia sesión para crear tu hogar.
+            </p>
+          </div>
+          <div className="entry-footer">
+            <Button block onClick={() => navigate("/entrar")}>
+              Ir a iniciar sesión
+            </Button>
+          </div>
+        </div>
+      </EntryShell>
+    );
   }
 
   return (
@@ -73,9 +96,14 @@ export function Cuenta() {
       title="Crea tu cuenta"
       subtitle="Así tu hogar te reconoce desde cualquier dispositivo."
       footer={
-        <Button block onClick={onContinue} disabled={busy}>
-          {busy ? "Creando…" : "Continuar"}
-        </Button>
+        <>
+          <Button block onClick={onContinue} disabled={busy}>
+            {busy ? "Creando..." : "Continuar"}
+          </Button>
+          <p className="entry-alt">
+            ¿Ya tienes cuenta? <Link to="/entrar">Inicia sesión</Link>
+          </p>
+        </>
       }
     >
       <Field label="Tu nombre" value={name} onChange={setName} autoComplete="name" />

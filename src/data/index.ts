@@ -89,7 +89,8 @@ export {
   useFundActions,
   useDeductionActions,
   useSplitActions,
-  useHouseholdSetup
+  useHouseholdSetup,
+  useSampleActions
 } from "./mutations";
 
 export type { OtherIncomeDraft, GoalDraft, FundDraft } from "./mutations";

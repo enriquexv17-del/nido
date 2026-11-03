@@ -17,7 +17,10 @@ export const supabase: SupabaseClient | null =
         auth: {
           persistSession: true,
           autoRefreshToken: true,
-          detectSessionInUrl: true
+          detectSessionInUrl: true,
+          // PKCE permite que el enlace de recuperación vuelva como `?code=...`
+          // antes del hash de la ruta (HashRouter), sin romper la navegación.
+          flowType: "pkce"
         }
       })
     : null;

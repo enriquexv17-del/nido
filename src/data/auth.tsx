@@ -1,16 +1,25 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
   type ReactNode
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { publicBaseUrl, recoveryRedirectUrl } from "../lib/paths";
+import { clearHouseholdCache } from "./api";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
 export interface AuthUser {
   id: string;
   email?: string;
+}
+
+export interface SignUpResult {
+  /** `true` cuando Supabase exige confirmar el correo antes de entrar. */
+  needsConfirmation: boolean;
 }
 
 interface AuthValue {
@@ -22,8 +31,10 @@ interface AuthValue {
   signUpName: string;
   setSignUpName: (name: string) => void;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<SignUpResult>;
   signInWithGoogle: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
@@ -34,9 +45,20 @@ const DEMO_USER: AuthUser = { id: "demo-enrique", email: "enrique@correo.com" };
 const DEMO_SESSION_KEY = "nido.demo.session";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [signUpName, setSignUpName] = useState("");
+
+  /**
+   * Al cambiar de cuenta hay que vaciar la caché de React Query y la del
+   * hogar; si no, una persona podría ver durante unos segundos los datos de
+   * la cuenta anterior que quedaron en memoria.
+   */
+  const resetCachedData = useCallback(() => {
+    clearHouseholdCache();
+    queryClient.clear();
+  }, [queryClient]);
 
   useEffect(() => {
     let active = true;
@@ -61,20 +83,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
       setUser(session ? { id: session.user.id, email: session.user.email ?? undefined } : null);
+      setLoading(false);
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") resetCachedData();
     });
 
     return () => {
       active = false;
       sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [resetCachedData]);
 
   const value = useMemo<AuthValue>(() => {
     const demoPersist = (next: AuthUser | null) => {
       localStorage.setItem(DEMO_SESSION_KEY, next ? "1" : "0");
       setUser(next);
+      resetCachedData();
     };
 
     return {
@@ -95,14 +121,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSignUpName(name);
         if (!isSupabaseConfigured || !supabase) {
           demoPersist({ id: DEMO_USER.id, email });
-          return;
+          return { needsConfirmation: false };
         }
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { name } }
         });
         if (error) throw error;
+        return { needsConfirmation: data.session === null };
       },
       async signInWithGoogle() {
         if (!isSupabaseConfigured || !supabase) {
@@ -111,8 +138,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const { error } = await supabase.auth.signInWithOAuth({
           provider: "google",
-          options: { redirectTo: window.location.origin }
+          options: { redirectTo: publicBaseUrl() }
         });
+        if (error) throw error;
+      },
+      async sendPasswordReset(email) {
+        if (!isSupabaseConfigured || !supabase) return;
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: recoveryRedirectUrl()
+        });
+        if (error) throw error;
+      },
+      async updatePassword(password) {
+        if (!isSupabaseConfigured || !supabase) return;
+        const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
       },
       async signOut() {
@@ -122,17 +161,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
+        resetCachedData();
       },
       async deleteAccount() {
         if (!isSupabaseConfigured || !supabase) {
           demoPersist(null);
           return;
         }
-        await supabase.rpc("delete_my_account");
-        await supabase.auth.signOut();
+        const { error } = await supabase.rpc("delete_my_account");
+        if (error) throw new Error(error.message);
+        // La cuenta ya no existe: cerramos la sesión local igualmente.
+        await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+        resetCachedData();
       }
     };
-  }, [user, loading, signUpName]);
+  }, [user, loading, signUpName, resetCachedData]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
