@@ -52,6 +52,10 @@ create index savings_funds_member_idx
 
 /* ---------------- RLS: solo el dueño ---------------- */
 
+alter table public.other_incomes  enable row level security;
+alter table public.savings_goals   enable row level security;
+alter table public.savings_funds   enable row level security;
+
 -- Otros ingresos
 create policy other_incomes_select on public.other_incomes
   for select using (

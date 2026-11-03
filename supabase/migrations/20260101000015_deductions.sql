@@ -93,6 +93,8 @@ on conflict (household_id, key) do nothing;
 
 /* ---------------- RLS: todo el hogar puede ver y editar ---------------- */
 
+alter table public.deductions enable row level security;
+
 create policy deductions_select on public.deductions
   for select using (public.is_member_of(household_id));
 
