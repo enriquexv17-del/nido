@@ -4,6 +4,8 @@
  */
 export function authError(message: string): string {
   const m = message.toLowerCase();
+  if (message.includes("GOOGLE_SOLO_WEB") || message.includes("GOOGLE_NATIVO"))
+    return "Usa correo y contraseña en esta versión.";
   if (m.includes("invalid login") || m.includes("invalid credentials"))
     return "Correo o contraseña incorrectos.";
   if (m.includes("already registered") || m.includes("already been registered"))

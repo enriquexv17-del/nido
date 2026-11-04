@@ -8,7 +8,8 @@ import {
   type ReactNode
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { publicBaseUrl, recoveryRedirectUrl } from "../lib/paths";
+import { oauthRedirectUrl, publicBaseUrl, recoveryRedirectUrl } from "../lib/paths";
+import { getPlatform } from "../lib/platform";
 import { clearHouseholdCache } from "./api";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
@@ -43,6 +44,31 @@ const AuthContext = createContext<AuthValue | null>(null);
 
 const DEMO_USER: AuthUser = { id: "demo-enrique", email: "enrique@correo.com" };
 const DEMO_SESSION_KEY = "nido.demo.session";
+
+/**
+ * Cierra el login de Google en Android: Supabase vuelve con el esquema propio
+ * (`com.nido.app://auth?code=...`). Extrae el `code` y lo canjea por sesión.
+ * Se usa tanto desde el botón (webview en segundo plano) como al reabrir la app
+ * desde el enlace (proceso reiniciado) mediante `App.getLaunchUrl()`.
+ */
+async function exchangeOAuthRedirect(url: string): Promise<void> {
+  if (!supabase) return;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return;
+  }
+  const code = parsed.searchParams.get("code");
+  if (!code) return;
+  try {
+    await supabase.auth.exchangeCodeForSession(code);
+    const { Browser } = await import("@capacitor/browser");
+    await Browser.close().catch(() => undefined);
+  } catch {
+    /* si el canje falla, el usuario sigue en la pantalla de entrada */
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
@@ -96,6 +122,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [resetCachedData]);
 
+  /**
+   * Android: captura el enlace profundo con el que vuelve Google
+   * (`com.nido.app://auth?code=...`). Se registra al arrancar para que funcione
+   * aunque el sistema haya reiniciado la app; también revisa el enlace de
+   * lanzamiento (`getLaunchUrl`) en el arranque en frío.
+   */
+  useEffect(() => {
+    if (getPlatform() !== "android") return;
+    let active = true;
+    let handle: { remove: () => void } | undefined;
+    (async () => {
+      const { App } = await import("@capacitor/app");
+      handle = await App.addListener("appUrlOpen", ({ url }) => {
+        void exchangeOAuthRedirect(url);
+      });
+      const launch = await App.getLaunchUrl();
+      if (active && launch?.url) await exchangeOAuthRedirect(launch.url);
+    })().catch(() => undefined);
+    return () => {
+      active = false;
+      void handle?.remove();
+    };
+  }, []);
+
   const value = useMemo<AuthValue>(() => {
     const demoPersist = (next: AuthUser | null) => {
       localStorage.setItem(DEMO_SESSION_KEY, next ? "1" : "0");
@@ -134,6 +184,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async signInWithGoogle() {
         if (!isSupabaseConfigured || !supabase) {
           demoPersist(DEMO_USER);
+          return;
+        }
+        const platform = getPlatform();
+        // Escritorio: no hay deep link fiable en esta versión.
+        if (platform === "desktop") {
+          throw new Error("GOOGLE_SOLO_WEB: usa correo y contraseña en esta versión.");
+        }
+        // Android: navegador del sistema + enlace profundo (lo captura el
+        // efecto de `appUrlOpen` de este proveedor).
+        if (platform === "android") {
+          const { Browser } = await import("@capacitor/browser");
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo: oauthRedirectUrl(), skipBrowserRedirect: true }
+          });
+          if (error) throw error;
+          if (data?.url) await Browser.open({ url: data.url });
           return;
         }
         const { error } = await supabase.auth.signInWithOAuth({

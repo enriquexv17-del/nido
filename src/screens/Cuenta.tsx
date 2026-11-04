@@ -6,6 +6,7 @@ import { Button } from "../components/Button";
 import { Icon } from "../components/Icon";
 import { Toast } from "../components/Toast";
 import { authError } from "../lib/authErrors";
+import { getPlatform } from "../lib/platform";
 import { useAuth } from "../data";
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -56,6 +57,10 @@ export function Cuenta() {
     setError(null);
     if (isDemo) {
       setToast("Disponible al conectar Supabase");
+      return;
+    }
+    if (getPlatform() === "desktop") {
+      setToast("Usa correo y contraseña en esta versión.");
       return;
     }
     try {

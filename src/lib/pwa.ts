@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { registerSW } from "virtual:pwa-register";
+import { isNative } from "./platform";
 
 type Listener = () => void;
 
@@ -19,6 +20,9 @@ function emit() {
  * `needsRefresh` y la pantalla Actualizaciones ofrece instalarla.
  */
 export function initPWA(): void {
+  // Dentro de la app nativa (Capacitor/Tauri) la web ya viene empaquetada: no
+  // se registra el service worker, que solo añadiría una caché paralela.
+  if (isNative()) return;
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
   updateSW = registerSW({
