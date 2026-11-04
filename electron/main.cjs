@@ -70,7 +70,11 @@ function sendAuthCallback(url) {
 
 /** Busca el enlace propio dentro de los argumentos de arranque. */
 function authUrlFromArgv(argv) {
-  return argv.find((a) => typeof a === "string" && a.startsWith(`${AUTH_SCHEME}://`)) ?? null;
+  return (
+    argv
+      .map((a) => (typeof a === "string" ? a.replace(/^"+|"+$/g, "") : ""))
+      .find((a) => a.startsWith(`${AUTH_SCHEME}://`)) ?? null
+  );
 }
 
 /* ------------------------------------ Arranque ------------------------------------ */
