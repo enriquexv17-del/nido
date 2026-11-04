@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { oauthRedirectUrl, publicBaseUrl, recoveryRedirectUrl } from "../lib/paths";
-import { getPlatform } from "../lib/platform";
+import { getPlatform, nidoBridge } from "../lib/platform";
 import { clearHouseholdCache } from "./api";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
@@ -63,10 +63,17 @@ async function exchangeOAuthRedirect(url: string): Promise<void> {
   if (!code) return;
   try {
     await supabase.auth.exchangeCodeForSession(code);
-    const { Browser } = await import("@capacitor/browser");
-    await Browser.close().catch(() => undefined);
   } catch {
     /* si el canje falla, el usuario sigue en la pantalla de entrada */
+  }
+  // En Android cierra la pestaña del navegador; en Electron no hace falta.
+  if (getPlatform() === "android") {
+    try {
+      const { Browser } = await import("@capacitor/browser");
+      await Browser.close();
+    } catch {
+      /* sin plugin de navegador */
+    }
   }
 }
 
@@ -146,6 +153,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  /**
+   * Windows (Electron): el proceso principal registra `com.nido.app://auth` y
+   * reenvía el enlace con el que vuelve Google (`window.nido.onAuthCallback`).
+   */
+  useEffect(() => {
+    if (getPlatform() !== "desktop") return;
+    const bridge = nidoBridge();
+    if (!bridge?.onAuthCallback) return;
+    const off = bridge.onAuthCallback((url) => {
+      void exchangeOAuthRedirect(url);
+    });
+    return () => off();
+  }, []);
+
   const value = useMemo<AuthValue>(() => {
     const demoPersist = (next: AuthUser | null) => {
       localStorage.setItem(DEMO_SESSION_KEY, next ? "1" : "0");
@@ -187,9 +208,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         const platform = getPlatform();
-        // Escritorio: no hay deep link fiable en esta versión.
+        // Escritorio (Electron): navegador del sistema + regreso por
+        // `com.nido.app://auth`, que reenvía el proceso principal.
         if (platform === "desktop") {
-          throw new Error("GOOGLE_SOLO_WEB: usa correo y contraseña en esta versión.");
+          const bridge = nidoBridge();
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo: oauthRedirectUrl(), skipBrowserRedirect: true }
+          });
+          if (error) throw error;
+          if (data?.url) {
+            if (bridge?.openExternal) await bridge.openExternal(data.url);
+            else window.open(data.url, "_blank", "noopener");
+          }
+          return;
         }
         // Android: navegador del sistema + enlace profundo (lo captura el
         // efecto de `appUrlOpen` de este proveedor).

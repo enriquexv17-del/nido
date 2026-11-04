@@ -1,0 +1,55 @@
+# Empaquetado de Windows (Electron + electron-builder), basado en la
+# configuración de AZKA Creative OS de Mario.
+appId: com.nido.app
+productName: Nido
+copyright: Copyright © 2026 Nido
+
+directories:
+  output: release
+  buildResources: build
+
+# Solo entra lo compilado y el proceso principal; se excluyen mapas y basura.
+# `node_modules` (dependencias de producción, p. ej. electron-updater) se
+# incluye automáticamente.
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+  - "!**/*.map"
+  - "!**/node_modules/**/android/**"
+  - "!**/node_modules/**/*.apk"
+
+# Registra com.nido.app://auth para el regreso del login con Google.
+protocols:
+  - name: Nido
+    schemes:
+      - com.nido.app
+
+# Actualización automática desde las Releases de GitHub.
+publish:
+  provider: github
+  owner: enriquexv17-del
+  repo: nido
+  releaseType: release
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+  artifactName: Nido-Setup-${version}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Nido
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  uninstallDisplayName: Nido
+  artifactName: Nido-Setup-${version}.${ext}
+  unicode: true
