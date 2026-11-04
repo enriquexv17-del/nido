@@ -5,6 +5,48 @@ probar en el celular). Está en orden: lo primero desbloquea lo demás.
 
 ---
 
+## 0. Subir el código a GitHub (bloqueado ahora mismo)
+
+Todo el trabajo está **listo y probado en tu PC**, pero **no se pudo subir**:
+el programa que sube el código entró como la cuenta `marioenrique17`, que no es
+la dueña del repositorio `enriquexv17-del/nido`, y el token que usa **no tiene
+el permiso `workflow`** (hace falta porque se agregó el archivo
+`.github/workflows/release.yml`).
+
+Son **6 cambios locales pendientes de subir**. Elige una opción:
+
+### Opción A · Lo más fácil (con GitHub Desktop o VS Code)
+
+1. Abre GitHub Desktop (o VS Code) en esta carpeta.
+2. Asegúrate de estar con la cuenta **enriquexv17-del** (no `marioenrique17`).
+3. Pulsa **Push origin**.
+
+Si te deja hacer push, listo: sigue con el paso 1.
+
+### Opción B · Con un token nuevo y `gh`
+
+1. Crea un **token** en GitHub: foto de perfil → **Settings** →
+   **Developer settings** → **Personal access tokens** → **Fine-grained
+   tokens** → **Generate new token**.
+   - *Repository access*: **Only select repositories** → `nido`.
+   - *Permissions*: **Contents → Read and write** y **Workflows → Read and
+     write**. (Este segundo es el que falta.)
+   - Genera y **copia** el token (empieza con `github_pat_…`).
+2. Abre PowerShell en la carpeta del proyecto y pega (reemplaza `TU_TOKEN`):
+
+   ```powershell
+   $env:GH_TOKEN="TU_TOKEN"
+   gh auth setup-git
+   git push origin main
+   ```
+
+3. Si el push dice «Everything up-to-date» o «main -> main», quedó.
+
+> Alternativa: agrega a `marioenrique17` como colaborador del repositorio
+> (**Settings → Collaborators**) y vuelve a intentar el push.
+
+---
+
 ## 1. Aplicar la migración 18 en Supabase (2 minutos)
 
 Sin esto, los cambios no se ven entre dispositivos al instante (sobre todo al

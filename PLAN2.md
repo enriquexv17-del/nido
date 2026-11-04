@@ -579,4 +579,6 @@ Se dispara con una etiqueta `v*` o a mano. `deploy.yml` (Pages) no se tocó.
 | APK firmado | pendiente de Mario/Actions (no se compila aquí) |
 | Instalador de Windows | pendiente de Mario/Actions (no se compila aquí) |
 | Pages | sin cambios en `deploy.yml` |
+| Push a `main` | ⏳ bloqueado: token sin permiso `workflow` (ver `PENDIENTES_MARIO.md`, paso 0) |
+| Release en GitHub | pendiente (se crea al subir la etiqueta `v1.0.0` tras los secretos) |
 | Secretos en el repo | ninguno (`git ls-files` sin keystores ni claves) |

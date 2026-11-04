@@ -81,6 +81,10 @@ La pantalla **Más → Actualizaciones** compara la versión instalada
 dispositivos ya instalados detectan la versión nueva y ofrecen
 **Instalar y reiniciar**.
 
+> Nota de desarrollo: la prueba `tests/actualizaciones.spec.ts` da por hecho que
+> `package.json` es **1.0.0** y `public/version.json` es **1.1.0**. Si subes la
+> versión de `package.json`, actualiza también esa prueba (y la de la release).
+
 ## Probar la compilación de Pages en local
 
 ```powershell
