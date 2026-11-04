@@ -589,19 +589,41 @@ web publicada (`deploy.yml` sigue con base `/nido/`).
 ### Estado y decisiones
 
 - Respaldo: etiqueta `respaldo-antes-electron` (para volver atrás si algo falla).
-- Espacio en `C:` al empezar: **9.85 GB libres** (por debajo de 10 GB): se anota
-  y se vigila; se prioriza el `.exe`.
-- Paso 1 (quitar Tauri): se borra `src-tauri/` y `scripts/tauri-build.mjs`, se
-  quitan `@tauri-apps/*` y los scripts `tauri*`, y la detección de plataforma
-  pasa a `isElectron()` (`window.nido`). Commit: _(Paso 1)_.
-- Paso 2 (Windows/Electron): `electron/main.cjs` + `electron/preload.cjs`,
-  `electron-builder.yml` (NSIS, salida `release/`), `npm run dist:win`.
-- Paso 3 (Android): APK firmado → `release/Nido-<versión>.apk` (requiere Android
-  SDK; si falta, se documenta como pendiente de Mario/Actions).
-- Paso 4 (Actualizaciones): `electron-updater` (GitHub) vía `preload.cjs`, web
-  con service worker y Android con `latest.json`, sin cambiar el diseño.
-- Paso 5 (verificación): build/vitest/playwright, valores de oro, `git ls-files`
-  sin secretos, cero menciones de Tauri y docs al día.
+- Espacio en `C:` al empezar: **9.85 GB libres** (por debajo de 10 GB): se anotó
+  y se vigiló. Al terminar quedaban ~8.7 GB (el empaquetado de Electron y el
+  APK caben sin problema).
+- Android SDK ya estaba en `%LOCALAPPDATA%\Android\Sdk` (platforms 34/36,
+  build-tools 34/35, cmdline-tools, `adb`), así que **no hubo que instalarlo**.
+- Todo se hizo en esta PC; **nada se subió** (`git push` sigue pendiente, ver
+  abajo).
+
+| Paso | Descripción | Estado | Commit |
+| --- | --- | --- | --- |
+| 1 | Quitar Tauri y detectar Electron (`window.nido`) | ✔ | `75d8ed8` |
+| 2 | Windows con Electron (`electron/`, `electron-builder.yml`, `dist:win`) | ✔ | `278bea0` |
+| 3 | APK de Android firmado | ✔ | `d8b72e5` |
+| 4 | Actualizaciones por plataforma (pruebas del puente Electron) | ✔ | `cdfd68d` |
+| 5 | Verificación final y documentación | ✔ | _(final)_ |
+
+### Artefactos generados en esta PC (`release/`)
+
+- `Nido-Setup-1.0.0.exe` (**88.92 MB**) + `.blockmap` + `latest.yml`.
+- `Nido-1.0.0.apk` (**3.88 MB**), firmado con el keystore de Nido
+  (`CN=Nido`; verificado con `apksigner`, esquema v2).
+- La app empaquetada (`release/win-unpacked/Nido.exe`) arranca y se mantiene
+  abierta (probada unos segundos).
+
+### Detalles de Windows (Electron)
+
+- `electron/main.cjs`: instancia única, `contextIsolation: true`,
+  `nodeIntegration: false`, enlaces externos con `shell.openExternal` y
+  protocolo `com.nido.app://auth` (lo registra el instalador NSIS).
+- `electron/preload.cjs` expone `window.nido` (versión, abrir enlaces, login,
+  actualizaciones con `electron-updater`).
+- `electron-builder.yml`: NSIS por usuario, salida en `release/`,
+  `Nido-Setup-${version}.exe`.
+- `scripts/gen-icon-ico.mjs` (`npm run native:icon`) genera `build/icon.ico`,
+  que NSIS exige (no acepta PNG).
 
 **Nota de push:** los commits se quedan **locales** (sin `git push`): el token de
 Mario no tiene permiso para el workflow. Ver el paso 0 de `PENDIENTES_MARIO.md`.

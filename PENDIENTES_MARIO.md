@@ -3,6 +3,14 @@
 Solo lo que **tú** puedes hacer (nadie más puede: contraseñas, cuentas, UAC,
 probar en el celular). Está en orden: lo primero desbloquea lo demás.
 
+> **Ya tienes los instaladores en tu PC** (no hace falta hacer nada para eso):
+>
+> - Windows: `C:\Users\mario\OneDrive\Escritorio\APP DE FINANANSAS\release\Nido-Setup-1.0.0.exe`
+> - Android: `C:\Users\mario\OneDrive\Escritorio\APP DE FINANANSAS\release\Nido-1.0.0.apk` (firmado release)
+>
+> Para instalarlos, mira [`INSTALAR.md`](INSTALAR.md). El resto de esta lista es
+> para publicarlos en internet y probarlos.
+
 ---
 
 ## 0. Subir el código a GitHub (bloqueado ahora mismo)
@@ -13,7 +21,8 @@ la dueña del repositorio `enriquexv17-del/nido`, y el token que usa **no tiene
 el permiso `workflow`** (hace falta porque se agregó el archivo
 `.github/workflows/release.yml`).
 
-Son **6 cambios locales pendientes de subir**. Elige una opción:
+Hay **varios cambios locales pendientes de subir** (más de diez). Elige una
+opción:
 
 ### Opción A · Lo más fácil (con GitHub Desktop o VS Code)
 

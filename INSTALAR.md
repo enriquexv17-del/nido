@@ -4,7 +4,7 @@ Nido funciona en tres sitios con la **misma cuenta y los mismos datos**:
 
 - **PWA** (se instala desde el navegador): iPhone, Android y PC.
 - **App de Android** (archivo `Nido.apk`).
-- **App de Windows** (instalador `Nido-setup.exe`).
+- **App de Windows** (instalador `Nido-Setup-<versión>.exe`).
 
 Elige la que quieras; no hace falta instalar las tres.
 
@@ -55,10 +55,10 @@ La web es <https://enriquexv17-del.github.io/nido/>.
 
 ---
 
-## App de Windows (`Nido-setup.exe`)
+## App de Windows (`Nido-Setup-<versión>.exe`)
 
 1. Entra a <https://github.com/enriquexv17-del/nido/releases/latest> y descarga
-   **Nido-setup.exe**.
+   **`Nido-Setup-<versión>.exe`** (por ejemplo, `Nido-Setup-1.0.0.exe`).
 2. Al abrirlo, Windows mostrará un aviso azul: **«Windows protegió tu PC»**
    (SmartScreen). Es normal: el instalador **no está firmado** con un
    certificado de pago.
@@ -66,14 +66,15 @@ La web es <https://enriquexv17-del.github.io/nido/>.
    - Pulsa **Ejecutar de todas formas**.
 3. El instalador está en español, se instala **solo para tu usuario** (no pide
    administrador) y crea el acceso directo.
-4. Abre Nido y entra con tu correo y contraseña.
+4. Abre Nido y entra con tu correo y contraseña o con **Google** (se abre tu
+   navegador y, al terminar, vuelve solo a la app).
 
 > La app de Windows se **actualiza sola**: cuando salga una versión nueva, la
 > pantalla **Más → Actualizaciones** la descarga y ofrece **Instalar y
 > reiniciar**.
 
-> **Google en Windows:** en esta versión, usa **correo y contraseña**. El botón
-> de Google te avisará de que no está disponible aquí.
+> **Si aún no hay una versión publicada**, tras instalar verás «Estás en la
+> última versión»; es normal y no rompe nada.
 
 ---
 
