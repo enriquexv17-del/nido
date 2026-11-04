@@ -14,3 +14,14 @@ scripts/_*.mjs
 .env
 .env.*
 !.env.example
+
+# Empaquetado nativo
+dist-native
+release
+src-tauri/target
+src-tauri/gen
+android/keystore.properties
+android/version.properties
+android/local.properties
+*.jks
+*.keystore

@@ -435,10 +435,40 @@ necesitan esos compiladores.
 
 | Paso | Descripción | Estado |
 | --- | --- | --- |
-| 0 | Diagnóstico del entorno (este apartado) | ✔ |
-| 1 | Web lista para nativo (`platform.ts`, `build:native`, sin SW en nativo) | pendiente |
-| 2 | Android con Capacitor (config, proyecto, íconos, scripts) | pendiente |
+| 0 | Diagnóstico del entorno (este apartado) | ✔ `71fa3a2` |
+| 1 | Web lista para nativo (`platform.ts`, build relativo, sin SW en nativo, Google Android) | ✔ `a81d5d8` |
+| 2 | Android con Capacitor (config, proyecto, íconos, firma, scripts) | ✔ |
 | 3 | Windows con Tauri 2 (`src-tauri/`, config, íconos, scripts) | pendiente |
 | 4 | Actualizaciones reales (web / Windows / Android) | pendiente |
 | 5 | GitHub Actions (`release.yml`: APK + instalador + `latest.json`) | pendiente |
 | 6 | Pruebas (unitarias de `platform.ts`/versiones, build/test/Playwright) | pendiente |
+
+### Base de rutas por plataforma
+
+- `VITE_TARGET` = `web` (por defecto) · `android` · `desktop`.
+- Scripts: `build:web` (base `/nido/`), `build:android` y `build:desktop` (base `./`).
+  `npm run build` sigue compilando con base `./` para desarrollo y Playwright;
+  GitHub Pages define `VITE_BASE` y manda sobre todo.
+- En builds nativos el plugin PWA se desactiva: no se genera service worker ni
+  manifiesto, y `initPWA()` no registra nada dentro de la app.
+- Verificado: `dist/manifest.webmanifest` sale con `scope`/`start_url`/`id` =
+  `/nido/` en `build:web`, y `./` en el build local; el build `android` no
+  contiene `sw.js` ni `manifest.webmanifest`.
+
+### Android (Capacitor 8)
+
+- `capacitor.config.ts`: `appId com.nido.app`, `appName Nido`, `webDir dist`,
+  sin `server.url` (lleva su propia copia).
+- Proyecto en `android/` (generado con `npx cap add android`).
+- Orientación vertical, `INTERNET` como único permiso, barra de estado `#18205F`
+  y áreas seguras (`viewport-fit=cover` + `env(safe-area-inset-*)` ya en el CSS).
+- Google: navegador del sistema (`@capacitor/browser`) + regreso por
+  `com.nido.app://auth` con `App.addListener("appUrlOpen")`; la sesión se cierra
+  con `exchangeCodeForSession`. En escritorio se avisa «Usa correo y contraseña».
+- Íconos adaptativos, monocromo y splash en todas las densidades generados con
+  `npm run native:assets` (sharp) desde el logo oficial.
+- Firma: `android/keystore.properties` (ignorado) → release firmado; si no
+  existe, el release usa la clave de depuración. Versión sincronizada desde
+  `package.json` con `npm run android:version`.
+- Scripts: `android:sync`, `android:build:debug`, `android:build:release`
+  (APK → `dist-native/Nido-<versión>.apk`) y `android:bundle` (AAB).
