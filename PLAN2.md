@@ -425,7 +425,7 @@ necesitan esos compiladores.
 | --- | --- |
 | Identificador de app | `com.nido.app` (Android y Tauri) |
 | Nombre | `Nido` |
-| Base de Vite nativa | `VITE_BASE=./` (script `build:native`); Pages sigue con `/nido/` |
+| Base de Vite nativa | `VITE_BASE=./` (`build:android`/`build:desktop`); Pages sigue con `/nido/` |
 | Service worker | **no** se registra dentro de Capacitor/Tauri (ya viene empaquetada) |
 | Actualizaciones | una utilidad `src/lib/updater.ts` con interfaz común por plataforma |
 | Firma Android | keystore **fuera del repo**; sin él, APK de depuración |
@@ -437,11 +437,11 @@ necesitan esos compiladores.
 | --- | --- | --- |
 | 0 | Diagnóstico del entorno (este apartado) | ✔ `71fa3a2` |
 | 1 | Web lista para nativo (`platform.ts`, build relativo, sin SW en nativo, Google Android) | ✔ `a81d5d8` |
-| 2 | Android con Capacitor (config, proyecto, íconos, firma, scripts) | ✔ |
-| 3 | Windows con Tauri 2 (`src-tauri/`, config, íconos, scripts) | pendiente |
-| 4 | Actualizaciones reales (web / Windows / Android) | pendiente |
+| 2 | Android con Capacitor (config, proyecto, íconos, firma, scripts) | ✔ `c51fc23` |
+| 3 | Windows con Tauri 2 (`src-tauri/`, config, íconos, scripts) | ✔ |
+| 4 | Actualizaciones reales (web / Windows / Android) | ✔ |
 | 5 | GitHub Actions (`release.yml`: APK + instalador + `latest.json`) | pendiente |
-| 6 | Pruebas (unitarias de `platform.ts`/versiones, build/test/Playwright) | pendiente |
+| 6 | Pruebas (unitarias de `platform.ts`/versiones, build/test/Playwright) | ✔ |
 
 ### Base de rutas por plataforma
 
@@ -472,3 +472,49 @@ necesitan esos compiladores.
   `package.json` con `npm run android:version`.
 - Scripts: `android:sync`, `android:build:debug`, `android:build:release`
   (APK → `dist-native/Nido-<versión>.apk`) y `android:bundle` (AAB).
+
+### Windows con Tauri 2
+
+- Proyecto en `src-tauri/` (generado con `npx tauri init`): `tauri.conf.json`,
+  `Cargo.toml`, `build.rs`, `src/lib.rs`, `src/main.rs`, `capabilities/default.json`.
+- `productName Nido`, `identifier com.nido.app`, versión desde `package.json`
+  (`"version": "../package.json"`), ventana 1100×760 con mínimo 400×640.
+- Carga el build `build:desktop` (`../dist`) y en desarrollo usa
+  `http://localhost:5173`.
+- CSP cerrada: solo `self`, `https://*.supabase.co`, `wss://*.supabase.co` y los
+  dominios de GitHub necesarios para leer la release.
+- Bundle `nsis` + `msi`, `createUpdaterArtifacts: true`, NSIS en español e
+  instalación por usuario (sin UAC). WebView2 se descarga sola si hace falta.
+- Actualizador: endpoint
+  `https://github.com/enriquexv17-del/nido/releases/latest/download/latest.json`
+  y clave **pública** en `plugins.updater.pubkey`. La privada vive fuera del repo
+  (`C:\Users\mario\nido-secrets\nido-updater.key` + contraseña en
+  `updater-password.txt`). El par se generó con `npx tauri signer generate`.
+- Plugins Rust `tauri-plugin-updater` y `tauri-plugin-process`; permisos
+  `updater:default` y `process:default` en `capabilities/default.json`.
+- Íconos generados con `npx tauri icon src-tauri/app-icon.png` (desde el logo).
+- Script `npm run tauri:build` → `scripts/tauri-build.mjs`: compila, firma,
+  copia instaladores y firmas a `dist-native/` y escribe `latest.json`
+  (`scripts/make-latest-json.mjs`).
+
+### Actualizaciones por plataforma
+
+- `src/lib/platform.ts` decide la rama (`web` / `android` / `desktop`).
+- `src/lib/updater.ts`: `fetchLatest` (web: `version.json`; Android: `latest.json`
+  con respaldo en el `version.json` publicado), `getInstalledVersion`
+  (`@capacitor/app` o `@tauri-apps/api/app`), `openDownload` (`@capacitor/browser`),
+  `checkDesktopUpdate` (`download` + `install`) y `relaunchApp`.
+- `src/lib/useAppUpdate.ts` devuelve un estado único para las tres plataformas y
+  `src/screens/Actualizaciones.tsx` usa el mecanismo real sin cambiar el diseño
+  (mismas clases y textos en web): web instala el service worker y recarga;
+  Android abre la descarga del APK; Windows descarga y luego instala y reinicia.
+- Pruebas unitarias nuevas: `src/lib/platform.test.ts` y
+  `src/lib/updater.test.ts` (comparación de versiones, notas, respaldo).
+
+### Entorno tras el Paso 3
+
+- Rust `stable-x86_64-pc-windows-msvc` instalado con `winget` (`rustc`/`cargo`
+  1.99.1). MSVC Build Tools: la instalación **falló por falta de espacio**
+  (código `0x80070070`, ~6.3 GB libres). Android SDK/`adb`: siguen sin estar.
+- Por eso el `.msi`/`.exe` y el APK **no se compilan en esta máquina**: los
+  produce GitHub Actions (Paso 5). Ver `PENDIENTES_MARIO.md`.
