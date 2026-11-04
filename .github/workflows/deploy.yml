@@ -37,7 +37,7 @@ jobs:
       # La app vive en https://USUARIO.github.io/NOMBRE_DEL_REPO/
       # El nombre del repo se toma solo; no hay que escribirlo a mano.
       - name: Compilar
-        run: npm run build
+        run: npm run build:web
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
