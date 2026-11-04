@@ -4,62 +4,92 @@ import { Button } from "../components/Button";
 import { Logo } from "../components/Icon";
 import { useReducedMotion } from "../motion";
 import { useAppUpdate } from "../lib/useAppUpdate";
-import { applyUpdate } from "../lib/pwa";
 
-/** Duración de la descarga simulada (aún no hay APK que descargar). */
+/** Duración de la descarga simulada del service worker (solo web). */
 const DOWNLOAD_MS = 2600;
 
 /**
- * Actualizaciones. La versión instalada sale de `package.json` y la publicada
- * de `version.json`; si hay una nueva, la barra avanza sola (descarga
- * simulada) y el botón instala la PWA (recarga con el service worker nuevo).
+ * Actualizaciones. Mismo diseño para las tres plataformas:
+ *
+ * - **web/PWA:** compara con `version.json` y recarga con el service worker nuevo.
+ * - **Android:** lee la última release y ofrece abrir la descarga del APK, que
+ *   se instala a mano.
+ * - **Windows:** el actualizador de Tauri descarga y luego instala y reinicia.
  */
 export function Actualizaciones() {
-  const { installed, latest, notes, hasUpdate, pending, checking, checkedAt, check } =
-    useAppUpdate();
+  const {
+    installed,
+    latest,
+    notes,
+    hasUpdate,
+    pending,
+    checking,
+    checkedAt,
+    platform,
+    progress: realProgress,
+    applying,
+    hint,
+    error,
+    run,
+    check
+  } = useAppUpdate();
   const reduced = useReducedMotion();
-  const [progress, setProgress] = useState(0);
-  const [applying, setApplying] = useState(false);
+  const [simulated, setSimulated] = useState(0);
 
+  // La barra de progreso solo se simula en web (la descarga real la hace el
+  // service worker). En Windows la reporta el actualizador; en Android no hay
+  // descarga dentro de la app.
   useEffect(() => {
+    if (platform !== "web") return;
     if (!hasUpdate) {
-      setProgress(0);
+      setSimulated(0);
       return;
     }
-    // Si el service worker ya tiene la versión nueva, no hay nada que simular.
     if (pending || reduced) {
-      setProgress(100);
+      setSimulated(100);
       return;
     }
     let elapsed = 0;
-    setProgress(0);
+    setSimulated(0);
     const id = window.setInterval(() => {
       elapsed += 120;
       const p = Math.min(100, Math.round((elapsed / DOWNLOAD_MS) * 100));
-      setProgress(p);
+      setSimulated(p);
       if (p >= 100) window.clearInterval(id);
     }, 120);
     return () => window.clearInterval(id);
-  }, [hasUpdate, pending, reduced, latest]);
+  }, [platform, hasUpdate, pending, reduced, latest]);
 
-  const ready = hasUpdate && progress >= 100;
+  const progress = platform === "web" ? simulated : realProgress ?? 0;
+  const showProgress = hasUpdate && platform !== "android";
+  const ready = hasUpdate && (platform === "android" || progress >= 100);
   const firstLoad = checking && !checkedAt;
 
-  const sub = !checkedAt
-    ? "Comprobando..."
-    : hasUpdate
-      ? "Nueva versión disponible"
-      : "Estás en la última versión";
+  const sub = error
+    ? "No se pudo comprobar"
+    : !checkedAt
+      ? "Comprobando..."
+      : hasUpdate
+        ? "Nueva versión disponible"
+        : "Estás en la última versión";
 
   const timeLabel = checkedAt
     ? `hoy, ${checkedAt.getHours()}:${String(checkedAt.getMinutes()).padStart(2, "0")}`
     : "—";
 
-  async function onInstall() {
-    if (!ready) return;
-    setApplying(true);
-    await applyUpdate();
-  }
+  const label = firstLoad
+    ? "Comprobando..."
+    : hasUpdate
+      ? platform === "android"
+        ? applying
+          ? "Abriendo..."
+          : "Abrir descarga"
+        : ready
+          ? applying
+            ? "Instalando..."
+            : "Instalar y reiniciar"
+          : "Instalar cuando termine"
+      : "Buscar actualizaciones";
 
   return (
     <div className="screen home-stagger">
@@ -85,7 +115,7 @@ export function Actualizaciones() {
           </>
         ) : null}
 
-        {hasUpdate ? (
+        {showProgress ? (
           <>
             <div className="progress">
               <span style={{ transform: `scaleX(${progress / 100})` }} />
@@ -111,21 +141,13 @@ export function Actualizaciones() {
 
       <Button
         block
-        onClick={hasUpdate ? onInstall : check}
-        disabled={firstLoad || (hasUpdate && !ready)}
+        onClick={hasUpdate ? run : check}
+        disabled={firstLoad || (hasUpdate && !ready) || applying}
       >
-        {firstLoad
-          ? "Comprobando..."
-          : hasUpdate
-            ? ready
-              ? applying
-                ? "Instalando..."
-                : "Instalar y reiniciar"
-              : "Instalar cuando termine"
-            : "Buscar actualizaciones"}
+        {label}
       </Button>
 
-      <p className="help-text">La app te avisa sola cada vez que sale una versión.</p>
+      <p className="help-text">{hint}</p>
     </div>
   );
 }
