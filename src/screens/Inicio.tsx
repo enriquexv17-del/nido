@@ -142,7 +142,7 @@ export function Inicio() {
             Crear mi hogar
           </Link>
           <Link to="/unirme" className="btn btn--outline btn--block">
-            Ya tengo un código
+            Unirme con un código
           </Link>
         </div>
       </div>

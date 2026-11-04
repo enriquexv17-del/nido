@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EntryScreen, EntryShell } from "../layout/EntryShell";
 import { Field } from "../components/Field";
@@ -13,14 +13,25 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 export function Cuenta() {
   const navigate = useNavigate();
-  const { signUp, signInWithGoogle, setSignUpName, isDemo } = useAuth();
+  const { signUp, verifySignupOtp, resendSignupOtp, signInWithGoogle, setSignUpName, isDemo } =
+    useAuth();
   const [name, setName] = useState("Enrique");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [confirmEmail, setConfirmEmail] = useState(false);
+  const [step, setStep] = useState<"datos" | "codigo">("datos");
+  const [otp, setOtp] = useState("");
+  const [resendIn, setResendIn] = useState(0);
+
+  /** Cuenta atrás para no saturar el reenvío de códigos. */
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const timer = window.setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendIn]);
 
   async function onContinue() {
     setError(null);
@@ -40,16 +51,54 @@ export function Cuenta() {
     try {
       setSignUpName(name.trim());
       const result = await signUp(email.trim(), password, name.trim());
-      // Si Supabase exige confirmar el correo, todavía no hay sesión.
+      // Si Supabase exige confirmar el correo, todavía no hay sesión: pasamos
+      // al código de 6 dígitos (no dependemos del enlace del correo).
       if (result.needsConfirmation) {
-        setConfirmEmail(true);
+        setOtp("");
+        setResendIn(30);
+        setStep("codigo");
         return;
       }
-      navigate("/hogar");
+      // En modo demostración se conserva el flujo de crear el hogar; con
+      // Supabase la app decide en inicio si crear o unirse con un código.
+      navigate(isDemo ? "/hogar" : "/inicio");
     } catch (e) {
       setError(authError(e instanceof Error ? e.message : ""));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onVerify() {
+    setError(null);
+    const token = otp.trim();
+    if (token.length !== 6) {
+      setError("Escribe los 6 dígitos que enviamos a tu correo.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await verifySignupOtp(email.trim(), token);
+      navigate("/inicio", { replace: true });
+    } catch (e) {
+      setError(authError(e instanceof Error ? e.message : ""));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onResend() {
+    setError(null);
+    setResending(true);
+    try {
+      await resendSignupOtp(email.trim());
+      setOtp("");
+      setResendIn(30);
+      setToast("Te enviamos un código nuevo");
+    } catch (e) {
+      setError(authError(e instanceof Error ? e.message : ""));
+    } finally {
+      setResending(false);
     }
   }
 
@@ -70,26 +119,71 @@ export function Cuenta() {
     }
   }
 
-  if (confirmEmail) {
+  if (step === "codigo") {
     return (
       <EntryShell>
         <div className="entry-screen">
           <header className="entry-head">
-            <h1 className="screen-title">Revisa tu correo</h1>
+            <button
+              type="button"
+              className="back-btn"
+              aria-label="Volver"
+              onClick={() => {
+                setError(null);
+                setOtp("");
+                setStep("datos");
+              }}
+            >
+              <Icon name="chevron-left" size={18} />
+            </button>
+            <h1 className="screen-title">Confirma tu correo</h1>
             <p className="screen-sub">
-              Te enviamos un enlace a {email.trim()} para confirmar tu cuenta.
+              Escribe el código de 6 dígitos que enviamos a {email.trim()}.
             </p>
           </header>
           <div className="entry-body">
+            <Field
+              label="Código de 6 dígitos"
+              value={otp}
+              onChange={(value) => setOtp(value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              placeholder="000000"
+              aria-invalid={error ? true : undefined}
+            />
+
+            {error ? (
+              <p className="form-error" role="alert">
+                {error}
+              </p>
+            ) : null}
+
             <p className="join-hint">
-              Cuando la confirmes, vuelve aquí e inicia sesión para crear tu hogar.
+              Revisa también la carpeta de spam. El código vence en pocos minutos.
             </p>
           </div>
           <div className="entry-footer">
-            <Button block onClick={() => navigate("/entrar")}>
-              Ir a iniciar sesión
+            <Button block onClick={onVerify} disabled={busy || otp.length !== 6}>
+              {busy ? "Confirmando..." : "Confirmar código"}
             </Button>
+            <Button
+              variant="ghost"
+              block
+              onClick={onResend}
+              disabled={resending || resendIn > 0}
+            >
+              {resending
+                ? "Reenviando..."
+                : resendIn > 0
+                  ? `Reenviar código (${resendIn}s)`
+                  : "Reenviar código"}
+            </Button>
+            <p className="entry-alt">
+              ¿Ya confirmaste? <Link to="/entrar">Inicia sesión</Link>
+            </p>
           </div>
+          {toast ? <Toast message={toast} onDone={() => setToast(null)} /> : null}
         </div>
       </EntryShell>
     );

@@ -33,6 +33,10 @@ interface AuthValue {
   setSignUpName: (name: string) => void;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<SignUpResult>;
+  /** Confirma la cuenta con el código de 6 dígitos que llega por correo. */
+  verifySignupOtp: (email: string, token: string) => Promise<void>;
+  /** Vuelve a enviar el código de confirmación. */
+  resendSignupOtp: (email: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
@@ -202,6 +206,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
         return { needsConfirmation: data.session === null };
       },
+      async verifySignupOtp(email, token) {
+        if (!isSupabaseConfigured || !supabase) {
+          demoPersist({ id: DEMO_USER.id, email });
+          return;
+        }
+        const { error } = await supabase.auth.verifyOtp({
+          email,
+          token,
+          type: "signup"
+        });
+        if (error) throw error;
+      },
+      async resendSignupOtp(email) {
+        if (!isSupabaseConfigured || !supabase) return;
+        const { error } = await supabase.auth.resend({
+          type: "signup",
+          email,
+          options: { emailRedirectTo: publicBaseUrl() }
+        });
+        if (error) throw error;
+      },
       async signInWithGoogle() {
         if (!isSupabaseConfigured || !supabase) {
           demoPersist(DEMO_USER);
@@ -237,7 +262,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const { error } = await supabase.auth.signInWithOAuth({
           provider: "google",
-          options: { redirectTo: publicBaseUrl() }
+          options: {
+            // En GitHub Pages la base es `/nido/`: la URL debe terminar en
+            // `/nido/` para que Supabase devuelva a la app publicada.
+            redirectTo: `${window.location.origin}${
+              import.meta.env.BASE_URL.endsWith("/")
+                ? import.meta.env.BASE_URL
+                : `${import.meta.env.BASE_URL}/`
+            }`
+          }
         });
         if (error) throw error;
       },

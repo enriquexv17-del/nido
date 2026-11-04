@@ -1,5 +1,8 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "../components/Icon";
+import { authError } from "../lib/authErrors";
+import { useAuth } from "../data";
 import {
   m,
   fadeUp,
@@ -15,6 +18,37 @@ const logoIn: Variants = {
 };
 
 export function Welcome() {
+  const navigate = useNavigate();
+  const { user, loading, isDemo } = useAuth();
+  const [oauthError, setOauthError] = useState<string | null>(null);
+
+  /**
+   * Si Google cancela o falla, Supabase vuelve a la app con `?error=...`.
+   * Lo mostramos una sola vez y limpiamos la barra de direcciones.
+   */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const providerError = params.get("error");
+    if (!providerError) return;
+    const description = params.get("error_description") ?? "";
+    ["error", "error_description", "error_code", "error_uri"].forEach((key) =>
+      params.delete(key)
+    );
+    const query = params.toString();
+    const clean = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", clean);
+    setOauthError(authError(`${providerError} ${description}`.trim()));
+  }, []);
+
+  /**
+   * Con una sesión activa la bienvenida ya no aplica: la app lleva a la
+   * persona a inicio (o a la pantalla para crear/unirse a un hogar).
+   * En el modo demostración se deja visible para poder probarla.
+   */
+  useEffect(() => {
+    if (!isDemo && !loading && user) navigate("/inicio", { replace: true });
+  }, [isDemo, loading, user, navigate]);
+
   return (
     <div className="welcome">
       <span className="welcome-deco welcome-deco--a drift" aria-hidden="true" />
@@ -46,11 +80,13 @@ export function Welcome() {
         </m.div>
 
         <m.div className="welcome-actions" variants={fadeUp}>
+          {oauthError ? (
+            <p className="form-error" role="alert">
+              {oauthError}
+            </p>
+          ) : null}
           <Link to="/cuenta" className="btn btn--maize btn--block">
             Crear mi hogar
-          </Link>
-          <Link to="/unirme" className="btn btn--outline btn--block">
-            Ya tengo un código
           </Link>
           <Link to="/entrar" className="welcome-login">
             Iniciar sesión

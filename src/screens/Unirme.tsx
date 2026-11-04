@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { EntryShell } from "../layout/EntryShell";
 import { Field } from "../components/Field";
 import { Button } from "../components/Button";
@@ -15,7 +15,7 @@ function joinError(message: string): string {
 
 export function Unirme() {
   const navigate = useNavigate();
-  const { signUpName, user, signIn, isDemo } = useAuth();
+  const { signUpName, user, loading } = useAuth();
   const { joinHousehold, isSaving } = useHouseholdSetup();
   const [code, setCode] = useState("");
   const [name, setName] = useState(signUpName || "Joaquín");
@@ -25,6 +25,12 @@ export function Unirme() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Unirse por código exige una sesión activa: sin ella no se consulta nada.
+    if (!user) {
+      setPreview(null);
+      setChecking(false);
+      return;
+    }
     const value = code.trim();
     if (value.length < 4) {
       setPreview(null);
@@ -43,10 +49,14 @@ export function Unirme() {
       active = false;
       window.clearTimeout(t);
     };
-  }, [code]);
+  }, [code, user]);
 
   async function onJoin() {
     setError(null);
+    if (!user) {
+      navigate("/entrar", { replace: true });
+      return;
+    }
     if (!preview) {
       setError("Revisa el código del hogar.");
       return;
@@ -57,12 +67,14 @@ export function Unirme() {
     }
     try {
       await joinHousehold({ code: code.trim(), memberName: name.trim(), color });
-      if (isDemo && !user) await signIn("", "");
       navigate("/inicio");
     } catch (e) {
       setError(joinError(e instanceof Error ? e.message : ""));
     }
   }
+
+  if (loading) return <div className="route-loading" aria-hidden="true" />;
+  if (!user) return <Navigate to="/entrar" replace />;
 
   return (
     <EntryShell>

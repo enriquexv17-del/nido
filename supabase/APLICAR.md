@@ -63,9 +63,11 @@ En **Authentication → Providers**:
 - **Email**: activado (registro con correo y contraseña).
 - **Google** (opcional): actívalo si quieres el botón «Continuar con Google» y
   configura las credenciales de Google Cloud.
-- **Confirm email**: puedes dejarlo activado (recomendado en producción). La app
-  avisa «Revisa tu correo» después del registro. Para probar sin correo,
-  desactívalo temporalmente.
+- **Confirm email**: puedes dejarlo activado (recomendado en producción). Tras
+  el registro la app pide el **código de 6 dígitos** del correo y lo valida con
+  `verifyOtp`, con opción de reenviarlo. Para que el correo incluya el código,
+  la plantilla **Confirm signup** debe contener `{{ .Token }}` (Authentication →
+  Email Templates). Para probar sin correo, desactívalo temporalmente.
 
 En **Authentication → URL Configuration**:
 

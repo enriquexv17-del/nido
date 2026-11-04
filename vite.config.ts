@@ -12,13 +12,16 @@ import { VitePWA } from "vite-plugin-pwa";
  */
 type Target = "web" | "android" | "desktop";
 
+/** Ruta pública de GitHub Pages. */
+const WEB_BASE = "/nido/";
+
 export default defineConfig(({ command }) => {
   const target = (process.env.VITE_TARGET as Target) ?? "web";
   const isNative = target !== "web";
   // `/nido/` es solo para el sitio publicado: dev y `vite preview` sirven en
   // la raíz (`./`) para que las pruebas y el desarrollo no cambien de ruta.
   const defaultBase =
-    command === "build" && target === "web" ? "/nido/" : "./";
+    command === "build" && target === "web" ? WEB_BASE : "./";
   const base = process.env.VITE_BASE ?? defaultBase;
 
   return {
