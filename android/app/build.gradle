@@ -17,6 +17,10 @@ def versionProps = new Properties()
 if (versionPropsFile.exists()) {
     versionProps.load(new FileInputStream(versionPropsFile))
 }
+// Se calculan aparte: `versionCode (expr).toInteger()` haría que Groovy aplique
+// `.toInteger()` al valor de retorno (nulo) del setter y falle con «Value is null».
+def versionCodeValue = (versionProps['versionCode'] ?: '1').toString().toInteger()
+def versionNameValue = (versionProps['versionName'] ?: '1.0.0').toString()
 
 android {
     namespace = "com.nido.app"
@@ -25,8 +29,8 @@ android {
         applicationId "com.nido.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (versionProps['versionCode'] ?: '1').toInteger()
-        versionName (versionProps['versionName'] ?: '1.0.0')
+        versionCode versionCodeValue
+        versionName versionNameValue
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
