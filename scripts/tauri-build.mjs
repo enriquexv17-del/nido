@@ -51,8 +51,14 @@ if (!env.TAURI_SIGNING_PRIVATE_KEY) {
 }
 
 /* 2) Compilar. */
+// Si no hay clave de firma, el actualizador no puede generar artefactos: se
+// compila igual el instalador desactivando `createUpdaterArtifacts`.
+const noUpdater = !env.TAURI_SIGNING_PRIVATE_KEY;
+const configArg = noUpdater
+  ? ["--config", JSON.stringify({ bundle: { createUpdaterArtifacts: false } })]
+  : [];
 run("npm", ["run", "build:desktop"], env);
-run("npx", ["tauri", "build", ...(debug ? ["--debug"] : [])], env);
+run("npx", ["tauri", "build", ...(debug ? ["--debug"] : []), ...configArg], env);
 
 /* 3) Reunir los artefactos. */
 const profile = debug ? "debug" : "release";

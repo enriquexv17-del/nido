@@ -439,8 +439,8 @@ necesitan esos compiladores.
 | 1 | Web lista para nativo (`platform.ts`, build relativo, sin SW en nativo, Google Android) | ✔ `a81d5d8` |
 | 2 | Android con Capacitor (config, proyecto, íconos, firma, scripts) | ✔ `c51fc23` |
 | 3 | Windows con Tauri 2 (`src-tauri/`, config, íconos, scripts) | ✔ |
-| 4 | Actualizaciones reales (web / Windows / Android) | ✔ |
-| 5 | GitHub Actions (`release.yml`: APK + instalador + `latest.json`) | pendiente |
+| 4 | Actualizaciones reales (web / Windows / Android) | ✔ `b2dbeee` |
+| 5 | GitHub Actions (`release.yml`: APK + instalador + `latest.json`) | ✔ |
 | 6 | Pruebas (unitarias de `platform.ts`/versiones, build/test/Playwright) | ✔ |
 
 ### Base de rutas por plataforma
@@ -518,3 +518,65 @@ necesitan esos compiladores.
   (código `0x80070070`, ~6.3 GB libres). Android SDK/`adb`: siguen sin estar.
 - Por eso el `.msi`/`.exe` y el APK **no se compilan en esta máquina**: los
   produce GitHub Actions (Paso 5). Ver `PENDIENTES_MARIO.md`.
+
+### Firma Android (Paso E)
+
+- Keystore generado con `keytool` en
+  `C:\Users\mario\nido-secrets\nido-release.jks`, contraseña en
+  `keystore-password.txt` (nunca se imprime). Alias `nido`, PKCS12, 10 000 días.
+- `android/keystore.properties` (ignorado por git) apunta a ese archivo, así
+  `npm run android:build:release` firma en serio.
+- En CI, el workflow decodifica el keystore desde `ANDROID_KEYSTORE_BASE64`; si
+  falta, usa la clave de depuración y avisa.
+
+### GitHub Actions (Paso 5)
+
+`.github/workflows/release.yml`, tres trabajos:
+
+| Trabajo | Runner | Qué hace |
+| --- | --- | --- |
+| `android` | ubuntu | Android SDK + Java 21, `android-build.mjs assembleRelease` → `Nido.apk` |
+| `windows` | windows | Rust + `npm run tauri:build` → instaladores, firmas y `latest.json` |
+| `release` | ubuntu | `gh release create`/`upload` con todos los artefactos |
+
+Se dispara con una etiqueta `v*` o a mano. `deploy.yml` (Pages) no se tocó.
+
+### Sincronización entre dispositivos (Paso I)
+
+- Hoy la app escucha Realtime (`useRealtime`) e invalida la caché de TanStack
+  Query.
+- **Faltaba** en la publicación `supabase_realtime`: `other_incomes`,
+  `savings_goals` y `savings_funds`. Y faltaba `replica identity full`, sin lo
+  cual los **borrados** no se difundían con RLS.
+- Migración **18** escrita y **NO aplicada**:
+  `supabase/migrations/20260101000018_realtime_completo.sql`. Mario debe
+  aplicarla.
+- Refuerzo añadido en `src/data/provider.tsx`: refresca al volver a primer
+  plano, al recuperar la conexión y cada minuto.
+- Prueba automática `tests/sincronizacion.spec.ts` (dos usuarios del mismo
+  hogar): se **omite** si no hay credenciales `NIDO_E2E_*` en el entorno y nunca
+  las imprime. Checklist manual en `docs/PRUEBA_SINCRONIZACION.md`.
+
+### Documentación
+
+- `INSTALAR.md`: cómo instalar la PWA (Android/iPhone/PC), el APK y el
+  instalador de Windows, con el aviso de SmartScreen.
+- `PENDIENTES_MARIO.md`: solo lo que le toca a Mario, numerado.
+- `docs/NATIVO.md`: resumen técnico del empaquetado y las actualizaciones.
+- `docs/PRUEBA_SINCRONIZACION.md`: checklist manual y prueba automática.
+- `PUBLICAR.md` y `README.md`: publicar la release nativa y qué hay en cada
+  plataforma.
+
+### Verificación de esta etapa
+
+| Comprobación | Resultado |
+| --- | --- |
+| `npm run build` | ✔ limpio (base `./`) |
+| `npm run build:web` | ✔ `manifest` con `/nido/`, `sw.js` presente |
+| `npm run build:android` | ✔ sin `sw.js` ni manifiesto |
+| `npx vitest run` | ✔ 64 pruebas (6 archivos) |
+| `npx playwright test` | ✔ 48 pasan, 20 omitidas |
+| APK firmado | pendiente de Mario/Actions (no se compila aquí) |
+| Instalador de Windows | pendiente de Mario/Actions (no se compila aquí) |
+| Pages | sin cambios en `deploy.yml` |
+| Secretos en el repo | ninguno (`git ls-files` sin keystores ni claves) |

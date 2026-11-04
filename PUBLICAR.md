@@ -100,3 +100,46 @@ Abre `http://localhost:4173/nido/` y comprueba que la app carga y que las rutas
   rutas sin `#`. Si usas un enlace externo, incluye el `#`.
 - **Sin datos reales:** faltan los secretos `VITE_SUPABASE_*` o el proyecto
   está vacío. Crea tu hogar desde la app y, si quieres, carga datos de ejemplo.
+
+## Publicar la app de Android y el instalador de Windows
+
+El workflow **Publicar versión (Android + Windows)**
+(`.github/workflows/release.yml`) compila el APK y el instalador y crea la
+**Release** con los archivos adjuntos.
+
+1. Antes de la primera vez, agrega los secretos (ver
+   [`PENDIENTES_MARIO.md`](PENDIENTES_MARIO.md), paso 3):
+   `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+   `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+   (más `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` si usas el modo real).
+2. Sube la versión en `package.json` y en `public/version.json` (misma versión).
+3. Crea y empuja la etiqueta:
+
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+4. Sigue el avance en **Actions**. Al terminar, la release queda en
+   `https://github.com/enriquexv17-del/nido/releases/latest` con:
+   `Nido.apk`, `Nido-setup.exe` (+`.sig`), `Nido.msi` (+`.sig`) y `latest.json`.
+
+Sin los secretos de firma, el APK se firma con la clave de depuración y el
+instalador se compila **sin** actualización automática (el workflow lo avisa).
+
+**Nunca** subas keystores, contraseñas ni la clave privada del actualizador.
+Viven en `C:\Users\mario\nido-secrets\` (fuera del repositorio).
+
+### Android (paso de versión)
+
+La versión del APK sale de `package.json`; el `versionCode` se calcula solo
+(`major·10000 + minor·100 + patch`) con `npm run android:version`. Cada release
+debe subir la versión para que Android acepte la actualización encima.
+
+### Windows (actualización automática)
+
+El endpoint del actualizador es
+`https://github.com/enriquexv17-del/nido/releases/latest/download/latest.json`,
+que el workflow genera con la firma del instalador. Las apps ya instaladas
+solo aceptan actualizaciones firmadas con la **misma clave privada** con la que
+se publicó la versión instalada.

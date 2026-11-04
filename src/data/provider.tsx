@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { currentMonth } from "../lib/month";
 import { AuthProvider, useAuth } from "./auth";
 import { isSupabaseConfigured, supabase } from "./supabase";
@@ -41,6 +41,33 @@ export function useRealtime(onChange: () => void) {
   }, [onChange]);
 }
 
+/**
+ * Refuerzo de sincronización. Aunque Realtime no falle, la app vuelve a pedir
+ * los datos al volver a primer plano, al recuperar la conexión y cada minuto
+ * (red de seguridad para cuando el móvil estuvo suspendido o sin red).
+ */
+function RealtimeRefuerzo() {
+  const client = useQueryClient();
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const refrescar = () => {
+      void client.invalidateQueries();
+    };
+    const alVolver = () => {
+      if (document.visibilityState === "visible") refrescar();
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    window.addEventListener("online", refrescar);
+    const id = window.setInterval(refrescar, 60_000);
+    return () => {
+      document.removeEventListener("visibilitychange", alVolver);
+      window.removeEventListener("online", refrescar);
+      window.clearInterval(id);
+    };
+  }, [client]);
+  return null;
+}
+
 export function NidoProvider({ children }: { children: ReactNode }) {
   const [client] = useState(
     () =>
@@ -59,7 +86,10 @@ export function NidoProvider({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <AuthProvider>
-        <DataProvider>{children}</DataProvider>
+        <DataProvider>
+          <RealtimeRefuerzo />
+          {children}
+        </DataProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

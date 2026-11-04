@@ -58,6 +58,28 @@ Nido es una PWA instalable, así que no necesita tiendas de apps:
 Una vez instalada abre a pantalla completa, funciona sin conexión y se
 actualiza sola cuando hay una versión nueva.
 
+## Apps para Android y Windows
+
+Además de la PWA, Nido se empaqueta como app:
+
+- **Android** (Capacitor): APK firmado, publicado en la sección *Releases*.
+- **Windows** (Tauri 2): instalador NSIS/MSI con actualización automática.
+
+Las instrucciones para instalarlas (y el aviso de SmartScreen) están en
+[`INSTALAR.md`](INSTALAR.md). El detalle técnico del empaquetado, en
+[`docs/NATIVO.md`](docs/NATIVO.md); lo que debe hacer Mario, en
+[`PENDIENTES_MARIO.md`](PENDIENTES_MARIO.md).
+
+Los tres destinos comparten el mismo código; la base de rutas y el service
+worker se eligen con `VITE_TARGET` (`npm run build:web`, `build:android`,
+`build:desktop`).
+
+## Actualizaciones
+
+- **Web/PWA:** service worker; la app avisa y recarga.
+- **Windows:** se descarga y se instala sola desde **Más → Actualizaciones**.
+- **Android:** avisa y abre la descarga del APK (instalación manual).
+
 ## Publicarla
 
 Como es un sitio estático, se puede publicar en cualquier hosting (Netlify,
@@ -112,6 +134,6 @@ tests/          pruebas de capturas e interacciones
 
 ## Siguientes fases (fuera de este alcance)
 
-- Cuentas reales y sincronización entre integrantes.
-- Guardado de datos y cálculos en vivo del reparto.
-- App para Android (Capacitor o Tauri) reutilizando esta UI.
+- Publicar el APK en una tienda (Google Play).
+- Firma de código de pago para el instalador de Windows (quita el aviso de
+  SmartScreen).

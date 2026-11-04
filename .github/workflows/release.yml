@@ -1,0 +1,180 @@
+name: Publicar versión (Android + Windows)
+
+# Se dispara al empujar una etiqueta de versión (p. ej. v1.0.0) o a mano.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Etiqueta ya publicada en el repo (p. ej. v1.0.0)"
+        required: true
+
+# Crear/actualizar la release necesita permiso de escritura.
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------- Android
+  android:
+    name: APK de Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Preparar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Preparar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # La firma sale de los secretos. Si no están, el APK se firma con la
+      # clave de depuración (Sirve para probar, no para publicar).
+      - name: Preparar la firma
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > android/nido-release.jks
+            {
+              echo "storeFile=$PWD/android/nido-release.jks"
+              echo "storePassword=$KEYSTORE_PASSWORD"
+              echo "keyAlias=nido"
+              echo "keyPassword=$KEYSTORE_PASSWORD"
+            } > android/keystore.properties
+            echo "Firma: keystore de release."
+          else
+            echo "::warning::Sin secretos de firma: el APK usará la clave de depuración."
+          fi
+
+      - name: Compilar el APK
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          chmod +x android/gradlew
+          node scripts/android-build.mjs assembleRelease
+
+      - name: Nombre estable para la descarga
+        run: cp dist-native/Nido-*.apk dist-native/Nido.apk
+
+      - name: Guardar el APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nido-apk
+          path: dist-native/Nido.apk
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------- Windows
+  windows:
+    name: Instalador de Windows
+    runs-on: windows-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Preparar Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Caché de Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar el instalador
+        env:
+          # Clave PRIVADA del actualizador (contenido del archivo). Sin ella, el
+          # instalador se crea igual pero sin actualización automática.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          RELEASE_BASE: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run tauri:build
+
+      - name: Guardar los instaladores
+        uses: actions/upload-artifact@v4
+        with:
+          name: nido-windows
+          path: dist-native/*
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------- Release
+  release:
+    name: Crear la release
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Bajar el APK
+        uses: actions/download-artifact@v4
+        with:
+          name: nido-apk
+          path: dist-native
+
+      - name: Bajar los instaladores
+        uses: actions/download-artifact@v4
+        with:
+          name: nido-windows
+          path: dist-native
+
+      - name: Publicar con gh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          VERSION=$(node -p "require('./package.json').version")
+          NOTES=$(node -e "try{const v=require('./public/version.json');process.stdout.write((v.notes||[]).map(n=>'- '+n).join('\n'))}catch(e){}")
+          {
+            echo "Nido $VERSION"
+            echo ""
+            echo "Instaladores y app de Android de Nido."
+            if [ -n "$NOTES" ]; then
+              echo ""
+              echo "Novedades:"
+              echo "$NOTES"
+            fi
+          } > RELEASE_NOTES.md
+
+          shopt -s nullglob
+          files=(dist-native/Nido.apk dist-native/Nido-setup.exe dist-native/Nido-setup.exe.sig dist-native/Nido.msi dist-native/Nido.msi.sig dist-native/latest.json)
+          printf 'Se subirán: %s\n' "${files[@]}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${files[@]}" --clobber
+          else
+            gh release create "$TAG" "${files[@]}" \
+              --title "Nido $VERSION" \
+              --notes-file RELEASE_NOTES.md
+          fi
