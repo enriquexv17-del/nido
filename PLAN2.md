@@ -386,3 +386,59 @@ suma exactamente su monto.
 | Reparto configurable | ✔ | proporcional, partes iguales, % manual 50/30/20 = 265.75 / 159.45 / 106.30 y monto fijo |
 | Apariencia persistente | ✔ | recarga conserva modo y acento |
 | Capturas | ✔ | `capturas-fase4/` (claro, oscuro y 6 acentos; no se versiona) |
+
+## Fase 5B · Empaquetado para Android y Windows (en curso)
+
+Esta etapa **no rediseña nada**: solo empaqueta la web ya terminada como app de
+Android (Capacitor) y de Windows (Tauri 2), y hace reales las actualizaciones.
+
+### Paso 0 · Diagnóstico del entorno (esta máquina)
+
+| Herramienta | Estado | Versión / nota |
+| --- | --- | --- |
+| Node.js | ✔ | v24.20.0 |
+| npm | ✔ | 11.19.0 |
+| Java (JDK) | ✔ | OpenJDK 21.0.12.1 LTS (`java` y `javac`) |
+| Capacitor CLI | ✔ | 8.6.0 (`npx cap`) |
+| Tauri CLI | ✔ | 2.12.4 (`npx tauri`; binario prebuilt, no exige Rust para andamiar) |
+| WebView2 (runtime) | ✔ | 156.0.4314.58 |
+| winget | ✔ | v1.29.380 (para instalar lo que falte) |
+| Rust / `rustc` / `cargo` | ✘ | **no instalado** |
+| MSVC C++ Build Tools | ✘ | **no instalado** (vswhere no encontrado) |
+| Android SDK / `ANDROID_HOME` | ✘ | variable vacía |
+| `adb` | ✘ | no instalado |
+| `gradle` (global) | ✘ | no instalado (Capacitor usa su wrapper) |
+| Git remoto | ✔ | `origin` = `enriquexv17-del/nido`; `main` local = remoto (`c471f2a`) |
+| GitHub Pages | ✔ | en vivo: <https://enriquexv17-del.github.io/nido/> |
+| Supabase real | ✔ | `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` en `.env` local y como secretos de Actions |
+
+**Conclusión.** La web, Supabase y Pages ya están hechos y verificados. En esta
+máquina **no** hay Rust/MSVC ni Android SDK, así que el `.msi`/`.exe` y el APK
+**no se pueden compilar aquí**: se dejan los scripts y la configuración listos y
+el compilado final lo produce GitHub Actions (Paso 5). El andamiaje de Android
+(`npx cap add android`) y de Tauri (`src-tauri/`) sí se generan aquí, porque no
+necesitan esos compiladores.
+
+### Decisiones de empaquetado
+
+| Tema | Decisión |
+| --- | --- |
+| Identificador de app | `com.nido.app` (Android y Tauri) |
+| Nombre | `Nido` |
+| Base de Vite nativa | `VITE_BASE=./` (script `build:native`); Pages sigue con `/nido/` |
+| Service worker | **no** se registra dentro de Capacitor/Tauri (ya viene empaquetada) |
+| Actualizaciones | una utilidad `src/lib/updater.ts` con interfaz común por plataforma |
+| Firma Android | keystore **fuera del repo**; sin él, APK de depuración |
+| Firma Windows | sin firma de código: SmartScreen avisará (se documenta) |
+
+### Pasos de trabajo (y commits)
+
+| Paso | Descripción | Estado |
+| --- | --- | --- |
+| 0 | Diagnóstico del entorno (este apartado) | ✔ |
+| 1 | Web lista para nativo (`platform.ts`, `build:native`, sin SW en nativo) | pendiente |
+| 2 | Android con Capacitor (config, proyecto, íconos, scripts) | pendiente |
+| 3 | Windows con Tauri 2 (`src-tauri/`, config, íconos, scripts) | pendiente |
+| 4 | Actualizaciones reales (web / Windows / Android) | pendiente |
+| 5 | GitHub Actions (`release.yml`: APK + instalador + `latest.json`) | pendiente |
+| 6 | Pruebas (unitarias de `platform.ts`/versiones, build/test/Playwright) | pendiente |
