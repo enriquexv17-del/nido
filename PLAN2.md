@@ -463,8 +463,8 @@ genera aquí. Windows se rehízo con **Electron** (no necesita Rust ni MSVC).
 - Orientación vertical, `INTERNET` como único permiso, barra de estado `#18205F`
   y áreas seguras (`viewport-fit=cover` + `env(safe-area-inset-*)` ya en el CSS).
 - Google: navegador del sistema (`@capacitor/browser`) + regreso por
-  `com.nido.app://auth` con `App.addListener("appUrlOpen")`; la sesión se cierra
-  con `exchangeCodeForSession`. En escritorio se avisa «Usa correo y contraseña».
+  `nido://login-callback` con `App.addListener("appUrlOpen")`; la sesión se cierra
+  con `exchangeCodeForSession`. El acceso es solo con Google en las tres plataformas.
 - Íconos adaptativos, monocromo y splash en todas las densidades generados con
   `npm run native:assets` (sharp) desde el logo oficial.
 - Firma: `android/keystore.properties` (ignorado) → release firmado; si no
@@ -481,7 +481,7 @@ genera aquí. Windows se rehízo con **Electron** (no necesita Rust ni MSVC).
 - Carga el build `build:desktop` (`dist/index.html`, base `./`, HashRouter),
   `contextIsolation: true`, `nodeIntegration: false`, instancia única.
 - Enlaces externos y login con Google abren en el navegador del sistema
-  (`shell.openExternal`); el regreso usa el protocolo `com.nido.app://auth`,
+  (`shell.openExternal`); el regreso usa el protocolo `nido://login-callback`,
   registrado por el instalador NSIS.
 - Empaquetado `electron-builder.yml`: NSIS, instalación por usuario,
   `artifactName` `Nido-Setup-${version}.exe` y salida en `release/`.
@@ -617,7 +617,7 @@ web publicada (`deploy.yml` sigue con base `/nido/`).
 
 - `electron/main.cjs`: instancia única, `contextIsolation: true`,
   `nodeIntegration: false`, enlaces externos con `shell.openExternal` y
-  protocolo `com.nido.app://auth` (lo registra el instalador NSIS).
+  protocolo `nido://login-callback` (lo registra el instalador NSIS).
 - `electron/preload.cjs` expone `window.nido` (versión, abrir enlaces, login,
   actualizaciones con `electron-updater`).
 - `electron-builder.yml`: NSIS por usuario, salida en `release/`,
@@ -625,5 +625,6 @@ web publicada (`deploy.yml` sigue con base `/nido/`).
 - `scripts/gen-icon-ico.mjs` (`npm run native:icon`) genera `build/icon.ico`,
   que NSIS exige (no acepta PNG).
 
-**Nota de push:** los commits se quedan **locales** (sin `git push`): el token de
-Mario no tiene permiso para el workflow. Ver el paso 0 de `PENDIENTES_MARIO.md`.
+**Nota de push:** los commits ya están en `main`; cada push a `main` despliega
+GitHub Pages. Si el push falla por permisos, ver el paso 0 de
+`PENDIENTES_MARIO.md`.

@@ -59,14 +59,15 @@ funcionando porque el fragmento no lo toca el servidor.
 ## Si usas Supabase
 
 En **Authentication → URL Configuration** de tu proyecto, agrega a *Redirect
-URLs* la dirección publicada:
+URLs* las direcciones permitidas:
 
 ```
 https://TU_USUARIO.github.io/TU_REPO/
+nido://login-callback
 ```
 
-El enlace de recuperación de contraseña vuelve con `?recuperar=1` a esa misma
-base y abre la pantalla «Nueva contraseña».
+`nido://login-callback` es el regreso de las apps Android y Windows (el acceso
+es **solo con Google**). En web/PWA, Google vuelve a la base publicada.
 
 ## Publicar una actualización
 

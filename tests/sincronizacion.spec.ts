@@ -1,47 +1,34 @@
+import { existsSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 
 /**
  * Sincronización real entre dispositivos (Supabase + Realtime).
  *
- * Se OMITE salvo que existan credenciales de prueba en el entorno:
+ * Con el acceso solo por Google no se puede iniciar sesión desde el script, así
+ * que la prueba reutiliza dos sesiones ya guardadas con `storageState`:
  *
- *   NIDO_E2E_SUPABASE=1
- *   NIDO_E2E_EMAIL_A / NIDO_E2E_PASSWORD_A
- *   NIDO_E2E_EMAIL_B / NIDO_E2E_PASSWORD_B
+ *   NIDO_E2E_STORAGE_A / NIDO_E2E_STORAGE_B → rutas a los archivos .json
  *
- * Los dos usuarios deben pertenecer al MISMO hogar de prueba. El APK/instalador
- * y el `dist` de esta prueba tienen que haberse compilado con
- * `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (ver docs/PRUEBA_SINCRONIZACION.md).
- * Las credenciales nunca se imprimen.
+ * Captúralas con `node scripts/e2e-login.mjs <archivo.json>` tras compilar con
+ * `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (ver
+ * docs/PRUEBA_SINCRONIZACION.md). Se omite si faltan y nunca imprime tokens.
  */
-
-const emailA = process.env.NIDO_E2E_EMAIL_A ?? "";
-const passA = process.env.NIDO_E2E_PASSWORD_A ?? "";
-const emailB = process.env.NIDO_E2E_EMAIL_B ?? "";
-const passB = process.env.NIDO_E2E_PASSWORD_B ?? "";
+const storageA = process.env.NIDO_E2E_STORAGE_A ?? "";
+const storageB = process.env.NIDO_E2E_STORAGE_B ?? "";
 const enabled =
-  process.env.NIDO_E2E_SUPABASE === "1" &&
-  emailA !== "" &&
-  passA !== "" &&
-  emailB !== "" &&
-  passB !== "";
+  storageA !== "" &&
+  storageB !== "" &&
+  existsSync(storageA) &&
+  existsSync(storageB);
 
 function field(page: Page, label: string) {
   return page.locator(".field").filter({ hasText: label }).locator("input");
 }
 
-async function entrar(page: Page, email: string, password: string) {
-  await page.goto("/#/entrar");
-  await field(page, "Correo").fill(email);
-  await field(page, "Contraseña").fill(password);
-  await page.getByRole("button", { name: "Entrar", exact: true }).click();
-  await page.waitForURL(/#\/(inicio|reparto)/, { timeout: 25_000 });
-}
-
 test.describe("sincronización entre dispositivos", () => {
   test.skip(
     !enabled,
-    "sin credenciales NIDO_E2E_* (ver docs/PRUEBA_SINCRONIZACION.md)"
+    "sin sesiones NIDO_E2E_STORAGE_A/B (ver docs/PRUEBA_SINCRONIZACION.md)"
   );
 
   test("lo que agrega un usuario lo ve el otro en menos de 10 segundos", async (
@@ -50,17 +37,20 @@ test.describe("sincronización entre dispositivos", () => {
   ) => {
     test.skip(testInfo.project.name !== "movil", "una vez basta");
 
-    const ctxA = await browser.newContext({ viewport: { width: 390, height: 844 } });
-    const ctxB = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const viewport = { width: 390, height: 844 };
+    const ctxA = await browser.newContext({ storageState: storageA, viewport });
+    const ctxB = await browser.newContext({ storageState: storageB, viewport });
     const a = await ctxA.newPage();
     const b = await ctxB.newPage();
 
     try {
-      await entrar(a, emailA, passA);
-      await entrar(b, emailB, passB);
+      // Ambas sesiones ya están iniciadas: entran directo al hogar.
+      await a.goto("/#/inicio");
+      await b.goto("/#/inicio");
+      await expect(a).toHaveURL(/#\/(inicio|reparto)/, { timeout: 25_000 });
+      await expect(b).toHaveURL(/#\/(inicio|reparto)/, { timeout: 25_000 });
 
       // B se queda mirando el inicio, sin recargar.
-      await b.goto("/#/inicio");
       await b.waitForTimeout(1500);
 
       // A agrega un gasto nuevo.

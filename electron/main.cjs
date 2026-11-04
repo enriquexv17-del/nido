@@ -5,8 +5,8 @@
  * - Ventana que carga el build `desktop` (`dist/index.html`, base `./`).
  * - `contextIsolation: true` y `nodeIntegration: false`: la web nunca toca Node.
  * - Enlaces externos y login con Google se abren en el navegador del sistema.
- * - El regreso del login usa el protocolo `com.nido.app://auth`, que registra el
- *   instalador NSIS; el enlace se reenvía a la ventana.
+ * - El regreso del login usa el protocolo `nido://login-callback`, que registra
+ *   el instalador NSIS; el enlace se reenvía a la ventana.
  * - Actualizaciones con `electron-updater` (proveedor GitHub), expuestas por el
  *   preload. Si no hay release legible, la app sigue mostrando «versión actual».
  *
@@ -16,7 +16,7 @@
 const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("node:path");
 
-const AUTH_SCHEME = "com.nido.app";
+const AUTH_SCHEME = "nido";
 const isDev = !app.isPackaged;
 
 /** Crea (una vez) la ventana principal. */
@@ -58,7 +58,7 @@ function createWindow() {
   });
 }
 
-/** Reenvía a la ventana el enlace `com.nido.app://auth...` con el que vuelve Google. */
+/** Reenvía a la ventana el enlace `nido://login-callback...` con el que vuelve Google. */
 function sendAuthCallback(url) {
   if (!url) return;
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -96,7 +96,7 @@ if (!gotLock) {
 
   if (isDev && process.platform === "win32") {
     // Evita abrir una ventana de consola extra y acelera el arranque.
-    app.setAppUserModelId(AUTH_SCHEME);
+    app.setAppUserModelId("com.nido.app");
   }
 
   app.whenReady().then(() => {

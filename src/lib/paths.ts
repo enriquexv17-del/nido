@@ -1,17 +1,21 @@
 import { getPlatform } from "./platform";
 
 /**
- * Esquema propio de la app de Android (Capacitor). Supabase debe tenerlo en
- * *Authentication → URL Configuration → Redirect URLs* como `com.nido.app://auth`.
+ * URL de regreso del login con Google en las apps nativas.
+ *
+ * Debe coincidir exactamente con lo registrado en Supabase
+ * (*Authentication → URL Configuration → Redirect URLs*) y con el esquema
+ * declarado por Android (`AndroidManifest.xml`) y Electron
+ * (`electron-builder.yml`).
  */
-export const ANDROID_AUTH_SCHEME = "com.nido.app";
+export const NATIVE_AUTH_CALLBACK = "nido://login-callback";
 
 /**
  * URL pública de la app respetando la base de Vite (`VITE_BASE`).
  *
  * En GitHub Pages la app vive en `/nombre-del-repo/`; en local en `/`.
- * Se usa para los redirects de OAuth y de recuperación de contraseña, que
- * Supabase debe devolver a la misma ruta base.
+ * Se usa para el regreso del OAuth en web/PWA, que Supabase debe devolver a
+ * la misma ruta base.
  */
 export function publicBaseUrl(): string {
   const base = import.meta.env.BASE_URL || "/";
@@ -21,20 +25,12 @@ export function publicBaseUrl(): string {
 /**
  * A dónde debe volver Supabase tras el login con Google.
  *
- * - **Android / desktop (Electron):** al esquema propio (`com.nido.app://auth`),
- *   que la app captura con `App.addListener("appUrlOpen")` en Android y con el
- *   protocolo registrado por el instalador en Electron.
- * - **web/PWA:** a la base pública de siempre.
+ * - **Android (Capacitor) y desktop (Electron):** al esquema propio
+ *   `nido://login-callback`, que la app captura y canjea por una sesión.
+ * - **web/PWA:** a la base pública (`https://.../nido/`).
  */
 export function oauthRedirectUrl(): string {
   const platform = getPlatform();
-  if (platform === "android" || platform === "desktop") return `${ANDROID_AUTH_SCHEME}://auth`;
+  if (platform === "android" || platform === "desktop") return NATIVE_AUTH_CALLBACK;
   return publicBaseUrl();
-}
-
-/** URL a la que Supabase vuelve después del correo de recuperación. */
-export function recoveryRedirectUrl(): string {
-  const url = new URL(publicBaseUrl());
-  url.searchParams.set("recuperar", "1");
-  return url.toString();
 }

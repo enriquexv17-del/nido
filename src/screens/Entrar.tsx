@@ -1,47 +1,39 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { EntryShell } from "../layout/EntryShell";
-import { Field } from "../components/Field";
-import { Button } from "../components/Button";
 import { Icon } from "../components/Icon";
 import { authError } from "../lib/authErrors";
 import { useAuth } from "../data";
 
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-
 /**
- * Iniciar sesión con una cuenta existente. Si ya hay sesión, sale de aquí.
- * En modo demostración acepta cualquier correo y contraseña.
+ * Pantalla de entrada: solo con Google. Si ya hay sesión (o el regreso del
+ * OAuth la creó), sale hacia inicio, que decide entre crear un hogar o unirse
+ * con un código.
  */
 export function Entrar() {
   const navigate = useNavigate();
-  const { signIn, isDemo, user, loading } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { signInWithGoogle, isDemo, user, loading, googleError, clearGoogleError } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const shown = error ?? googleError;
+
   useEffect(() => {
-    // En modo real, si ya hay sesión no tiene sentido quedarse aquí. En el
-    // modo demostración la sesión viene abierta por defecto, así que dejamos
-    // la pantalla visible para poder probarla.
+    // En modo real, si ya hay sesión no tiene sentido quedarse aquí.
     if (!isDemo && !loading && user) navigate("/inicio", { replace: true });
   }, [isDemo, loading, user, navigate]);
 
-  async function onEnter() {
+  // El error del OAuth nativo se muestra una vez y se limpia al salir.
+  useEffect(() => () => clearGoogleError(), [clearGoogleError]);
+
+  async function onGoogle() {
     setError(null);
-    if (!EMAIL_RE.test(email)) {
-      setError("Escribe un correo válido.");
-      return;
-    }
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
+    clearGoogleError();
     setBusy(true);
     try {
-      await signIn(email.trim(), password);
-      navigate("/inicio", { replace: true });
+      await signInWithGoogle();
+      // En modo demostración la sesión es inmediata: entramos a crear hogar.
+      if (isDemo) navigate("/hogar", { replace: true });
     } catch (e) {
       setError(authError(e instanceof Error ? e.message : ""));
     } finally {
@@ -63,47 +55,29 @@ export function Entrar() {
           </button>
           <h1 className="screen-title">Inicia sesión</h1>
           <p className="screen-sub">
-            {isDemo
-              ? "En modo demostración puedes entrar con cualquier correo."
-              : "Entra con el correo con el que creaste tu cuenta."}
+            Entra con tu cuenta de Google para recuperar tu hogar en cualquier
+            dispositivo.
           </p>
         </header>
 
         <div className="entry-body">
-          <Field
-            label="Correo"
-            value={email}
-            onChange={setEmail}
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-          />
-          <Field
-            label="Contraseña"
-            value={password}
-            onChange={setPassword}
-            type="password"
-            autoComplete="current-password"
-          />
-
-          {error ? (
+          {shown ? (
             <p className="form-error" role="alert">
-              {error}
+              {shown}
             </p>
           ) : null}
-
-          <Link className="entry-link" to="/recuperar">
-            Olvidé mi contraseña
-          </Link>
         </div>
 
         <div className="entry-footer">
-          <Button block onClick={onEnter} disabled={busy}>
-            {busy ? "Entrando..." : "Entrar"}
-          </Button>
-          <p className="entry-alt">
-            ¿Aún no tienes cuenta? <Link to="/cuenta">Crear una</Link>
-          </p>
+          <button
+            type="button"
+            className="btn btn--google btn--block"
+            onClick={onGoogle}
+            disabled={busy}
+          >
+            <Icon name="google" size={18} />
+            {busy ? "Abriendo Google..." : "Entrar con Google"}
+          </button>
         </div>
       </div>
     </EntryShell>

@@ -45,8 +45,8 @@ La web es <https://enriquexv17-del.github.io/nido/>.
 2. Al abrirlo, Android pedirá permiso para instalar apps de esta fuente:
    **Ajustes** → activa **Permitir desde esta fuente** → vuelve atrás.
 3. Pulsa **Instalar**. Si ya la tenías, se **actualiza** sin perder datos.
-4. Al abrir la app por primera vez, entra con tu **correo y contraseña** o con
-   **Google**.
+4. Al abrir la app por primera vez, pulsa **Entrar con Google** y elige tu
+   cuenta.
 
 > **Actualizar más adelante:** descarga el APK nuevo de la última release e
 > instálalo encima. La app lo recuerda en **Más → Actualizaciones** (abre la
@@ -66,8 +66,8 @@ La web es <https://enriquexv17-del.github.io/nido/>.
    - Pulsa **Ejecutar de todas formas**.
 3. El instalador está en español, se instala **solo para tu usuario** (no pide
    administrador) y crea el acceso directo.
-4. Abre Nido y entra con tu correo y contraseña o con **Google** (se abre tu
-   navegador y, al terminar, vuelve solo a la app).
+4. Abre Nido y pulsa **Entrar con Google** (se abre tu navegador y, al
+   terminar, vuelve solo a la app).
 
 > La app de Windows se **actualiza sola**: cuando salga una versión nueva, la
 > pantalla **Más → Actualizaciones** la descarga y ofrece **Instalar y

@@ -31,9 +31,10 @@ Notas rápidas:
 
 ## Prueba automática (opcional, para quien programa)
 
-`tests/sincronizacion.spec.ts` hace lo mismo con dos usuarios distintos en dos
-pestañas. **Se omite** salvo que existan credenciales de prueba en el entorno, y
-**nunca** las imprime.
+`tests/sincronizacion.spec.ts` hace lo mismo en dos pestañas con dos sesiones
+del mismo hogar. Como el acceso es **solo con Google**, el script no puede
+iniciar sesión: reutiliza dos sesiones ya guardadas con `storageState`. **Se
+omite** si no existen y **nunca** imprime tokens.
 
 Requisitos:
 
@@ -43,23 +44,22 @@ Requisitos:
   $env:VITE_SUPABASE_URL="https://TU_REF.supabase.co"
   $env:VITE_SUPABASE_ANON_KEY="la_clave_anon"
   npm run build
+  npm run preview -- --port 4173
   ```
-- Definir las variables (solo en tu sesión; no las escribas en archivos del
-  repositorio):
+- En otra terminal, captura cada sesión (se abre una ventana; entra con Google):
   ```powershell
-  $env:NIDO_E2E_SUPABASE="1"
-  $env:NIDO_E2E_EMAIL_A="usuario-a@correo.com"
-  $env:NIDO_E2E_PASSWORD_A="contraseña-de-A"
-  $env:NIDO_E2E_EMAIL_B="usuario-b@correo.com"
-  $env:NIDO_E2E_PASSWORD_B="contraseña-de-B"
+  node scripts/e2e-login.mjs "C:\Users\mario\nido-secrets\sesion-a.json"
+  node scripts/e2e-login.mjs "C:\Users\mario\nido-secrets\sesion-b.json"
   ```
-- Ejecutar:
+- Define las rutas y ejecuta:
   ```powershell
+  $env:NIDO_E2E_STORAGE_A="C:\Users\mario\nido-secrets\sesion-a.json"
+  $env:NIDO_E2E_STORAGE_B="C:\Users\mario\nido-secrets\sesion-b.json"
   npx playwright test tests/sincronizacion.spec.ts
   ```
 
-La prueba agrega un gasto llamado `Prueba <marca de tiempo>`; bórralo después
-desde la app para no dejarlo en el hogar de prueba.
+Guarda esos archivos **fuera del repositorio**: contienen la sesión (tokens).
+La prueba agrega un gasto `Prueba <marca de tiempo>`; bórralo después.
 
 ## Cómo funciona por dentro
 

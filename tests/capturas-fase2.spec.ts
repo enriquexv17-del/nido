@@ -2,7 +2,7 @@ import { test, type Page } from "@playwright/test";
 
 const ROUTES: [string, string][] = [
   ["01-bienvenida", "/bienvenida"],
-  ["02-cuenta", "/cuenta"],
+  ["02-entrar", "/entrar"],
   ["03-hogar", "/hogar"],
   ["04-invitar", "/invitar"],
   ["05-unirme", "/unirme"],

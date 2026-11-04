@@ -72,7 +72,7 @@ Entrada (sin barra inferior):
 | Ruta | Pantalla |
 | --- | --- |
 | `/bienvenida` | Bienvenida |
-| `/cuenta` | Crear cuenta |
+| `/entrar` | Iniciar sesión (Google) |
 | `/hogar` | Configurar hogar |
 | `/invitar` | Invitar |
 | `/unirme` | Unirme con código |

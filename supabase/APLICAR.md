@@ -56,30 +56,28 @@ de los disparadores, alarga los códigos de hogar a 8 caracteres y recorta los
 permisos de las funciones. No borra ni reescribe datos. Detalles en
 [`RLS.md`](./RLS.md).
 
-## 3. Configurar autenticación
+## 3. Configurar autenticación (solo Google)
 
 En **Authentication → Providers**:
 
-- **Email**: activado (registro con correo y contraseña).
-- **Google** (opcional): actívalo si quieres el botón «Continuar con Google» y
-  configura las credenciales de Google Cloud.
-- **Confirm email**: puedes dejarlo activado (recomendado en producción). Tras
-  el registro la app pide el **código de 6 dígitos** del correo y lo valida con
-  `verifyOtp`, con opción de reenviarlo. Para que el correo incluya el código,
-  la plantilla **Confirm signup** debe contener `{{ .Token }}` (Authentication →
-  Email Templates). Para probar sin correo, desactívalo temporalmente.
+- **Google**: actívalo y configura las credenciales de Google Cloud (o usa el
+  proveedor que trae Supabase). Es el **único** acceso de Nido.
+- **Email**: puedes desactivarlo. La app ya no registra ni inicia sesión con
+  correo, contraseña ni códigos OTP.
 
 En **Authentication → URL Configuration**:
 
 - **Site URL**: tu URL pública, por ejemplo
   `https://TU_USUARIO.github.io/TU_REPO/`.
 - **Redirect URLs**, agrega:
-  - `https://TU_USUARIO.github.io/TU_REPO/**`
+  - `nido://login-callback` (apps Android y Windows)
+  - `https://TU_USUARIO.github.io/TU_REPO/**` (web/PWA)
   - `http://localhost:5173/**`
   - `http://localhost:4173/**`
 
-La recuperación de contraseña vuelve a
-`.../?recuperar=1#/restablecer`; esa URL debe estar permitida.
+Google vuelve a `nido://login-callback` en las apps nativas y a la base pública
+en web/PWA. Esa dirección debe coincidir con la declarada en
+`android/app/src/main/AndroidManifest.xml` y `electron-builder.yml`.
 
 ## 4. Copiar las claves al proyecto
 
@@ -121,8 +119,8 @@ Todas las tablas de datos de usuario deben salir con `rowsecurity = true`:
 
 Prueba rápida de aislamiento (dos cuentas de hogares distintos):
 
-1. Crea la cuenta A, crea su hogar y anota el código.
-2. Crea la cuenta B en una ventana privada, crea **otro** hogar.
+1. Entra con la cuenta A (Google), crea su hogar y anota el código.
+2. Entra con la cuenta B (Google) en una ventana privada, crea **otro** hogar.
 3. Con B, intenta abrir el código de A desde «Unirme»: debe entrar al hogar de
    A solo si usas el código; no debe ver los gastos, sueldos, descuentos ni
    actividad de A.
@@ -171,7 +169,8 @@ Pages con origen **GitHub Actions** y haz push a `main`. El workflow compila con
 ## Comprobación final
 
 - [ ] Las 11 tablas públicas tienen `rowsecurity = true`.
-- [ ] Registro, inicio de sesión y «Olvidé mi contraseña» funcionan.
+- [ ] Iniciar sesión con Google funciona en web, Android y Windows.
+- [ ] La app no muestra registro, contraseña ni códigos de verificación.
 - [ ] Crear hogar deja el hogar vacío y permite cargar el ejemplo.
 - [ ] Dos cuentas de hogares distintos no se ven entre sí.
 - [ ] Otros ingresos y ahorros solo los ve su dueño.

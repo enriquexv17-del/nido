@@ -19,11 +19,11 @@ files:
   - "!**/node_modules/**/android/**"
   - "!**/node_modules/**/*.apk"
 
-# Registra com.nido.app://auth para el regreso del login con Google.
+# Registra nido://login-callback para el regreso del login con Google.
 protocols:
   - name: Nido
     schemes:
-      - com.nido.app
+      - nido
 
 # Actualización automática desde las Releases de GitHub.
 publish:

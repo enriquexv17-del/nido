@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Logo } from "../components/Icon";
 import { authError } from "../lib/authErrors";
 import { useAuth } from "../data";
@@ -19,8 +19,9 @@ const logoIn: Variants = {
 
 export function Welcome() {
   const navigate = useNavigate();
-  const { user, loading, isDemo } = useAuth();
+  const { user, loading, isDemo, signInWithGoogle, googleError, clearGoogleError } = useAuth();
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   /**
    * Si Google cancela o falla, Supabase vuelve a la app con `?error=...`.
@@ -48,6 +49,25 @@ export function Welcome() {
   useEffect(() => {
     if (!isDemo && !loading && user) navigate("/inicio", { replace: true });
   }, [isDemo, loading, user, navigate]);
+
+  /**
+   * Las dos acciones llevan a Google. Con sesión creada, la app decide en
+   * inicio si hay que crear un hogar o entrar al que ya existe; en el modo
+   * demostración vamos directo a la pantalla correspondiente.
+   */
+  async function onGoogle(kind: "create" | "login") {
+    setOauthError(null);
+    clearGoogleError();
+    setBusy(true);
+    try {
+      await signInWithGoogle();
+      if (isDemo) navigate(kind === "create" ? "/hogar" : "/inicio", { replace: true });
+    } catch (e) {
+      setOauthError(authError(e instanceof Error ? e.message : ""));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="welcome">
@@ -80,17 +100,27 @@ export function Welcome() {
         </m.div>
 
         <m.div className="welcome-actions" variants={fadeUp}>
-          {oauthError ? (
+          {oauthError || googleError ? (
             <p className="form-error" role="alert">
-              {oauthError}
+              {oauthError ?? googleError}
             </p>
           ) : null}
-          <Link to="/cuenta" className="btn btn--maize btn--block">
+          <button
+            type="button"
+            className="btn btn--maize btn--block"
+            onClick={() => onGoogle("create")}
+            disabled={busy}
+          >
             Crear mi hogar
-          </Link>
-          <Link to="/entrar" className="welcome-login">
+          </button>
+          <button
+            type="button"
+            className="welcome-login"
+            onClick={() => onGoogle("login")}
+            disabled={busy}
+          >
             Iniciar sesión
-          </Link>
+          </button>
         </m.div>
       </m.div>
     </div>

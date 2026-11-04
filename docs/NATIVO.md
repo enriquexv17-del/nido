@@ -23,7 +23,12 @@ el nombre del repositorio. La detección de plataforma está en
 
 - Config: `capacitor.config.ts` (`com.nido.app`, `Nido`, `webDir dist`).
 - Proyecto: `android/`. Orientación vertical y solo permiso `INTERNET`.
-- Enlace profundo del login: `com.nido.app://auth`.
+- Enlace profundo del login (solo Google): `nido://login-callback`.
+  - `AndroidManifest.xml` lo declara como `intent-filter` (`scheme="nido"`,
+    `host="login-callback"`) con `launchMode="singleTask"`.
+  - `src/data/auth.tsx` abre Google con `@capacitor/browser` y captura el
+    regreso con `@capacitor/app` (`appUrlOpen` / `getLaunchUrl`), canjea el
+    `code` con `exchangeCodeForSession` (PKCE) y cierra el navegador.
 - Íconos y splash: `npm run native:assets` (script `scripts/gen-native-assets.mjs`).
 - Versión: `npm run android:version` escribe `android/version.properties` desde
   `package.json` (`versionCode` = major·10000 + minor·100 + patch).
@@ -45,7 +50,8 @@ el nombre del repositorio. La detección de plataforma está en
 - Ventana de escritorio, `contextIsolation: true`, `nodeIntegration: false` e
   instancia única. Carga `dist/index.html` (build `desktop`, base `./`).
 - Enlaces externos y login con Google se abren en el navegador del sistema
-  (`shell.openExternal`); el regreso usa el protocolo `com.nido.app://auth`.
+  (`shell.openExternal`); el regreso usa el protocolo `nido://login-callback`,
+  que registra el instalador NSIS y reenvía a la ventana (`onAuthCallback`).
 - Compilar:
   ```powershell
   npm run dist:win   # build:desktop + electron-builder --win nsis

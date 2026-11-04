@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { EntryScreen } from "../layout/EntryShell";
 import { Field } from "../components/Field";
 import { Button } from "../components/Button";
@@ -8,7 +8,7 @@ import { COLOR_CHOICES, useAuth, useHouseholdSetup } from "../data";
 
 export function Hogar() {
   const navigate = useNavigate();
-  const { signUpName, user, signIn, isDemo } = useAuth();
+  const { user, loading } = useAuth();
   const { createHousehold, isSaving } = useHouseholdSetup();
   const [home, setHome] = useState("Nuestro depa");
   const [color, setColor] = useState<string>("--p1");
@@ -23,15 +23,17 @@ export function Hogar() {
     try {
       await createHousehold({
         name: home.trim(),
-        memberName: (signUpName || "Yo").trim(),
+        memberName: (user?.name || "Yo").trim(),
         color
       });
-      if (isDemo && !user) await signIn("", "");
       navigate("/invitar");
     } catch {
       setError("No pudimos crear el hogar. Intenta de nuevo.");
     }
   }
+
+  if (loading) return <div className="route-loading" aria-hidden="true" />;
+  if (!user) return <Navigate to="/entrar" replace />;
 
   return (
     <EntryScreen
@@ -40,7 +42,7 @@ export function Hogar() {
       subtitle="Lo verán todas las personas que se unan."
       footer={
         <Button block onClick={onCreate} disabled={isSaving}>
-          {isSaving ? "Creando…" : "Crear hogar"}
+          {isSaving ? "Creando..." : "Crear hogar"}
         </Button>
       }
     >

@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Flujo de entrada completo en modo demostración: crear hogar, copiar el
- * código y unirse desde otra pestaña (mismo navegador, mismo almacén), con el
- * tiempo real por `BroadcastChannel`.
+ * Flujo de entrada completo en modo demostración con Google: crear hogar,
+ * copiar el código y unirse desde otra pestaña (mismo navegador, mismo
+ * almacén), con el tiempo real por `BroadcastChannel`.
  */
 function field(page: Page, label: string) {
   return page.locator(".field").filter({ hasText: label }).locator("input");
@@ -17,11 +17,8 @@ test("entrada: crear hogar y unirse desde otra pestaña", async ({ browser }) =>
   await a.addInitScript(() => localStorage.setItem("nido.demo.session", "0"));
   await a.goto("/#/bienvenida");
 
-  await a.getByRole("link", { name: "Crear mi hogar" }).click();
-  await field(a, "Tu nombre").fill("Ana");
-  await field(a, "Correo").fill("ana@correo.com");
-  await field(a, "Contraseña").fill("secreto1");
-  await a.getByRole("button", { name: "Continuar", exact: true }).click();
+  // "Crear mi hogar" lleva a Google; en modo demostración entra y va al hogar.
+  await a.getByRole("button", { name: "Crear mi hogar" }).click();
 
   await field(a, "Nombre del hogar").fill("Casa de prueba");
   await a.getByRole("button", { name: "Crear hogar" }).click();

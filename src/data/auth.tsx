@@ -8,7 +8,8 @@ import {
   type ReactNode
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { oauthRedirectUrl, publicBaseUrl, recoveryRedirectUrl } from "../lib/paths";
+import { authError as describeAuthError } from "../lib/authErrors";
+import { oauthRedirectUrl } from "../lib/paths";
 import { getPlatform, nidoBridge } from "../lib/platform";
 import { clearHouseholdCache } from "./api";
 import { isSupabaseConfigured, supabase } from "./supabase";
@@ -16,11 +17,8 @@ import { isSupabaseConfigured, supabase } from "./supabase";
 export interface AuthUser {
   id: string;
   email?: string;
-}
-
-export interface SignUpResult {
-  /** `true` cuando Supabase exige confirmar el correo antes de entrar. */
-  needsConfirmation: boolean;
+  /** Nombre del perfil de Google, para prellenar el hogar. */
+  name?: string;
 }
 
 interface AuthValue {
@@ -28,34 +26,56 @@ interface AuthValue {
   loading: boolean;
   /** `true` cuando no hay Supabase: la app funciona con datos de prueba. */
   isDemo: boolean;
-  /** Nombre con el que crear el hogar al registrarse. */
-  signUpName: string;
-  setSignUpName: (name: string) => void;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<SignUpResult>;
-  /** Confirma la cuenta con el código de 6 dígitos que llega por correo. */
-  verifySignupOtp: (email: string, token: string) => Promise<void>;
-  /** Vuelve a enviar el código de confirmación. */
-  resendSignupOtp: (email: string) => Promise<void>;
+  /** Error del regreso de Google (cancelación, proveedor, etc.). */
+  googleError: string | null;
+  clearGoogleError: () => void;
   signInWithGoogle: () => Promise<void>;
-  sendPasswordReset: (email: string) => Promise<void>;
-  updatePassword: (password: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
 
-const DEMO_USER: AuthUser = { id: "demo-enrique", email: "enrique@correo.com" };
+const DEMO_USER: AuthUser = {
+  id: "demo-enrique",
+  email: "enrique@correo.com",
+  name: "Enrique"
+};
 const DEMO_SESSION_KEY = "nido.demo.session";
 
+/** Nombre visible a partir del perfil de Google (o del correo). */
+function sessionUser(user: {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+}): AuthUser {
+  const meta = user.user_metadata ?? {};
+  const fullName = typeof meta.full_name === "string" ? meta.full_name.trim() : "";
+  const name = typeof meta.name === "string" ? meta.name.trim() : "";
+  return {
+    id: user.id,
+    email: user.email ?? undefined,
+    name: fullName || name || user.email?.split("@")[0] || undefined
+  };
+}
+
+function closeAndroidBrowser(): void {
+  if (getPlatform() !== "android") return;
+  void import("@capacitor/browser")
+    .then(({ Browser }) => Browser.close())
+    .catch(() => undefined);
+}
+
 /**
- * Cierra el login de Google en Android: Supabase vuelve con el esquema propio
- * (`com.nido.app://auth?code=...`). Extrae el `code` y lo canjea por sesión.
- * Se usa tanto desde el botón (webview en segundo plano) como al reabrir la app
- * desde el enlace (proceso reiniciado) mediante `App.getLaunchUrl()`.
+ * Canjea el regreso de Google por una sesión de Supabase.
+ *
+ * Acepta el `code` de PKCE (`nido://login-callback?code=...`) y, como respaldo,
+ * tokens en el fragmento (`#access_token=...&refresh_token=...`).
  */
-async function exchangeOAuthRedirect(url: string): Promise<void> {
+async function exchangeOAuthRedirect(
+  url: string,
+  onError: (message: string | null) => void
+): Promise<void> {
   if (!supabase) return;
   let parsed: URL;
   try {
@@ -63,21 +83,45 @@ async function exchangeOAuthRedirect(url: string): Promise<void> {
   } catch {
     return;
   }
-  const code = parsed.searchParams.get("code");
-  if (!code) return;
+
   try {
-    await supabase.auth.exchangeCodeForSession(code);
-  } catch {
-    /* si el canje falla, el usuario sigue en la pantalla de entrada */
-  }
-  // En Android cierra la pestaña del navegador; en Electron no hace falta.
-  if (getPlatform() === "android") {
-    try {
-      const { Browser } = await import("@capacitor/browser");
-      await Browser.close();
-    } catch {
-      /* sin plugin de navegador */
+    const providerError = parsed.searchParams.get("error");
+    if (providerError) {
+      const description = parsed.searchParams.get("error_description") ?? "";
+      onError(describeAuthError(`${providerError} ${description}`.trim()));
+      return;
     }
+
+    const code = parsed.searchParams.get("code");
+    if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+      onError(null);
+      return;
+    }
+
+    // Respaldo para proveedores que devuelven los tokens en el fragmento.
+    const fragment = new URLSearchParams(parsed.hash.replace(/^#/, ""));
+    const fragmentError = fragment.get("error");
+    if (fragmentError) {
+      const description = fragment.get("error_description") ?? "";
+      onError(describeAuthError(`${fragmentError} ${description}`.trim()));
+      return;
+    }
+    const accessToken = fragment.get("access_token");
+    const refreshToken = fragment.get("refresh_token");
+    if (accessToken && refreshToken) {
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      });
+      if (error) throw error;
+      onError(null);
+    }
+  } catch (e) {
+    onError(describeAuthError(e instanceof Error ? e.message : ""));
+  } finally {
+    closeAndroidBrowser();
   }
 }
 
@@ -85,7 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [signUpName, setSignUpName] = useState("");
+  const [googleError, setGoogleError] = useState<string | null>(null);
+
+  /** Identidad estable: las pantallas lo usan en efectos de limpieza. */
+  const clearGoogleError = useCallback(() => setGoogleError(null), []);
 
   /**
    * Al cambiar de cuenta hay que vaciar la caché de React Query y la del
@@ -115,16 +162,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
-      const s = data.session;
-      setUser(s ? { id: s.user.id, email: s.user.email ?? undefined } : null);
+      setUser(data.session ? sessionUser(data.session.user) : null);
       setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      setUser(session ? { id: session.user.id, email: session.user.email ?? undefined } : null);
+      setUser(session ? sessionUser(session.user) : null);
       setLoading(false);
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") resetCachedData();
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        resetCachedData();
+        setGoogleError(null);
+      }
     });
 
     return () => {
@@ -134,10 +183,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [resetCachedData]);
 
   /**
-   * Android: captura el enlace profundo con el que vuelve Google
-   * (`com.nido.app://auth?code=...`). Se registra al arrancar para que funcione
-   * aunque el sistema haya reiniciado la app; también revisa el enlace de
-   * lanzamiento (`getLaunchUrl`) en el arranque en frío.
+   * Android (Capacitor): captura `nido://login-callback` con `appUrlOpen`.
+   * Se registra al arrancar para funcionar aunque el sistema haya reiniciado
+   * la app; también revisa el enlace de lanzamiento (`getLaunchUrl`).
    */
   useEffect(() => {
     if (getPlatform() !== "android") return;
@@ -146,10 +194,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       const { App } = await import("@capacitor/app");
       handle = await App.addListener("appUrlOpen", ({ url }) => {
-        void exchangeOAuthRedirect(url);
+        void exchangeOAuthRedirect(url, setGoogleError);
       });
       const launch = await App.getLaunchUrl();
-      if (active && launch?.url) await exchangeOAuthRedirect(launch.url);
+      if (active && launch?.url) {
+        await exchangeOAuthRedirect(launch.url, setGoogleError);
+      }
     })().catch(() => undefined);
     return () => {
       active = false;
@@ -158,15 +208,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Windows (Electron): el proceso principal registra `com.nido.app://auth` y
-   * reenvía el enlace con el que vuelve Google (`window.nido.onAuthCallback`).
+   * Windows (Electron): el proceso principal registra el protocolo `nido://`
+   * y reenvía el enlace de regreso con `window.nido.onAuthCallback`.
    */
   useEffect(() => {
     if (getPlatform() !== "desktop") return;
     const bridge = nidoBridge();
     if (!bridge?.onAuthCallback) return;
     const off = bridge.onAuthCallback((url) => {
-      void exchangeOAuthRedirect(url);
+      void exchangeOAuthRedirect(url, setGoogleError);
     });
     return () => off();
   }, []);
@@ -182,108 +232,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       isDemo: !isSupabaseConfigured,
-      signUpName,
-      setSignUpName,
-      async signIn(email, password) {
-        if (!isSupabaseConfigured || !supabase) {
-          demoPersist({ id: DEMO_USER.id, email: email || DEMO_USER.email });
-          return;
-        }
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      },
-      async signUp(email, password, name) {
-        setSignUpName(name);
-        if (!isSupabaseConfigured || !supabase) {
-          demoPersist({ id: DEMO_USER.id, email });
-          return { needsConfirmation: false };
-        }
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { name } }
-        });
-        if (error) throw error;
-        return { needsConfirmation: data.session === null };
-      },
-      async verifySignupOtp(email, token) {
-        if (!isSupabaseConfigured || !supabase) {
-          demoPersist({ id: DEMO_USER.id, email });
-          return;
-        }
-        const { error } = await supabase.auth.verifyOtp({
-          email,
-          token,
-          type: "signup"
-        });
-        if (error) throw error;
-      },
-      async resendSignupOtp(email) {
-        if (!isSupabaseConfigured || !supabase) return;
-        const { error } = await supabase.auth.resend({
-          type: "signup",
-          email,
-          options: { emailRedirectTo: publicBaseUrl() }
-        });
-        if (error) throw error;
-      },
+      googleError,
+      clearGoogleError,
       async signInWithGoogle() {
+        setGoogleError(null);
         if (!isSupabaseConfigured || !supabase) {
           demoPersist(DEMO_USER);
           return;
         }
+
         const platform = getPlatform();
-        // Escritorio (Electron): navegador del sistema + regreso por
-        // `com.nido.app://auth`, que reenvía el proceso principal.
-        if (platform === "desktop") {
-          const bridge = nidoBridge();
-          const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: "google",
-            options: { redirectTo: oauthRedirectUrl(), skipBrowserRedirect: true }
-          });
-          if (error) throw error;
-          if (data?.url) {
-            if (bridge?.openExternal) await bridge.openExternal(data.url);
-            else window.open(data.url, "_blank", "noopener");
-          }
-          return;
-        }
-        // Android: navegador del sistema + enlace profundo (lo captura el
-        // efecto de `appUrlOpen` de este proveedor).
+
+        // Android (Capacitor): navegador del sistema, nunca el WebView.
         if (platform === "android") {
           const { Browser } = await import("@capacitor/browser");
           const { data, error } = await supabase.auth.signInWithOAuth({
             provider: "google",
-            options: { redirectTo: oauthRedirectUrl(), skipBrowserRedirect: true }
+            options: {
+              redirectTo: oauthRedirectUrl(),
+              skipBrowserRedirect: true
+            }
           });
           if (error) throw error;
-          if (data?.url) await Browser.open({ url: data.url });
+          if (!data?.url) throw new Error("GOOGLE_SIN_URL");
+          await Browser.open({ url: data.url });
           return;
         }
+
+        // Windows (Electron): navegador externo + protocolo nido://.
+        if (platform === "desktop") {
+          const bridge = nidoBridge();
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+              redirectTo: oauthRedirectUrl(),
+              skipBrowserRedirect: true
+            }
+          });
+          if (error) throw error;
+          if (!data?.url) throw new Error("GOOGLE_SIN_URL");
+          if (bridge?.openExternal) await bridge.openExternal(data.url);
+          else window.open(data.url, "_blank", "noopener");
+          return;
+        }
+
+        // Web / PWA instalada: vuelve a la base publicada (`/nido/`).
         const { error } = await supabase.auth.signInWithOAuth({
           provider: "google",
-          options: {
-            // En GitHub Pages la base es `/nido/`: la URL debe terminar en
-            // `/nido/` para que Supabase devuelva a la app publicada.
-            redirectTo: `${window.location.origin}${
-              import.meta.env.BASE_URL.endsWith("/")
-                ? import.meta.env.BASE_URL
-                : `${import.meta.env.BASE_URL}/`
-            }`
-          }
+          options: { redirectTo: oauthRedirectUrl() }
         });
-        if (error) throw error;
-      },
-      async sendPasswordReset(email) {
-        if (!isSupabaseConfigured || !supabase) return;
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: recoveryRedirectUrl()
-        });
-        if (error) throw error;
-      },
-      async updatePassword(password) {
-        if (!isSupabaseConfigured || !supabase) return;
-        const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
       },
       async signOut() {
@@ -307,7 +304,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resetCachedData();
       }
     };
-  }, [user, loading, signUpName, resetCachedData]);
+  }, [user, loading, googleError, clearGoogleError, resetCachedData]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

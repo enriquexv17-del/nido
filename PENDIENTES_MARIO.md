@@ -13,46 +13,19 @@ probar en el celular). Está en orden: lo primero desbloquea lo demás.
 
 ---
 
-## 0. Subir el código a GitHub (bloqueado ahora mismo)
+## 0. Subir el código a GitHub (listo)
 
-Todo el trabajo está **listo y probado en tu PC**, pero **no se pudo subir**:
-el programa que sube el código entró como la cuenta `marioenrique17`, que no es
-la dueña del repositorio `enriquexv17-del/nido`, y el token que usa **no tiene
-el permiso `workflow`** (hace falta porque se agregó el archivo
-`.github/workflows/release.yml`).
+El código ya está en `main`. Si vuelves a hacer cambios, en la carpeta del
+proyecto:
 
-Hay **varios cambios locales pendientes de subir** (más de diez). Elige una
-opción:
+```powershell
+git add -A
+git commit -m "Describe el cambio"
+git push origin main
+```
 
-### Opción A · Lo más fácil (con GitHub Desktop o VS Code)
-
-1. Abre GitHub Desktop (o VS Code) en esta carpeta.
-2. Asegúrate de estar con la cuenta **enriquexv17-del** (no `marioenrique17`).
-3. Pulsa **Push origin**.
-
-Si te deja hacer push, listo: sigue con el paso 1.
-
-### Opción B · Con un token nuevo y `gh`
-
-1. Crea un **token** en GitHub: foto de perfil → **Settings** →
-   **Developer settings** → **Personal access tokens** → **Fine-grained
-   tokens** → **Generate new token**.
-   - *Repository access*: **Only select repositories** → `nido`.
-   - *Permissions*: **Contents → Read and write** y **Workflows → Read and
-     write**. (Este segundo es el que falta.)
-   - Genera y **copia** el token (empieza con `github_pat_…`).
-2. Abre PowerShell en la carpeta del proyecto y pega (reemplaza `TU_TOKEN`):
-
-   ```powershell
-   $env:GH_TOKEN="TU_TOKEN"
-   gh auth setup-git
-   git push origin main
-   ```
-
-3. Si el push dice «Everything up-to-date» o «main -> main», quedó.
-
-> Alternativa: agrega a `marioenrique17` como colaborador del repositorio
-> (**Settings → Collaborators**) y vuelve a intentar el push.
+Si el push falla por permisos, ejecuta `gh auth setup-git` con una cuenta que
+sea dueña del repositorio (o pide que te agreguen como colaborador).
 
 ---
 
@@ -84,7 +57,7 @@ Necesario para que el login con Google vuelva a la app Android y a la web.
 3. **Redirect URLs** → *Add URL* (una por una):
    ```
    https://enriquexv17-del.github.io/nido/
-   com.nido.app://auth
+   nido://login-callback
    ```
 4. Guarda.
 
@@ -171,7 +144,6 @@ https://github.com/enriquexv17-del/nido/releases/latest
 1. En el celular, abre la release y descarga **Nido.apk**.
 2. Android pedirá permitir «instalar apps de esta fuente»: actívalo.
 3. Instala y abre Nido. Prueba:
-   - iniciar sesión con **correo y contraseña**;
    - iniciar sesión con **Google** (debe abrirse el navegador y volver solo a la app);
    - agregar un gasto y ver que aparece en la PC y en la PWA del iPhone.
 4. En **Más → Actualizaciones** debe decir «Estás en la última versión».
@@ -184,7 +156,7 @@ https://github.com/enriquexv17-del/nido/releases/latest
 2. Windows mostrará el aviso azul de **SmartScreen** («Windows protegió tu
    PC»). Es normal: el instalador no está firmado con un certificado de pago.
    Pulsa **Más información** → **Ejecutar de todas formas**.
-3. Instala, abre Nido y comprueba el inicio de sesión con correo y contraseña.
+3. Instala, abre Nido y comprueba el inicio de sesión con **Google**.
 
 ---
 

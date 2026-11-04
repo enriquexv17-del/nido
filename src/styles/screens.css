@@ -2247,6 +2247,16 @@ button.settings-row {
   font-weight: 600;
   color: rgba(255, 255, 255, 0.86);
   padding: 4px;
+  background: none;
+  border: 0;
+  width: 100%;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.welcome-login:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ---------- Hogar vacío / guía de inicio ---------- */

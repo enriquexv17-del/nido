@@ -15,6 +15,10 @@ scripts/_*.mjs
 .env.*
 !.env.example
 
+# Sesiones capturadas para la prueba de sincronización (contienen tokens)
+sesion-*.json
+*.session.json
+
 # Empaquetado nativo
 dist-native
 release

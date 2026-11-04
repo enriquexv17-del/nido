@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { EntryShell } from "../layout/EntryShell";
 import { Field } from "../components/Field";
@@ -15,14 +15,25 @@ function joinError(message: string): string {
 
 export function Unirme() {
   const navigate = useNavigate();
-  const { signUpName, user, loading } = useAuth();
+  const { user, loading } = useAuth();
   const { joinHousehold, isSaving } = useHouseholdSetup();
   const [code, setCode] = useState("");
-  const [name, setName] = useState(signUpName || "Joaquín");
+  const [name, setName] = useState("");
   const [color, setColor] = useState<string>("--p2");
   const [preview, setPreview] = useState<{ name: string; count: number } | null>(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * El nombre viene del perfil de Google. Solo lo prellenamos una vez, para
+   * no pisar lo que la persona haya escrito.
+   */
+  const nameFilled = useRef(false);
+  useEffect(() => {
+    if (nameFilled.current || !user?.name) return;
+    nameFilled.current = true;
+    setName(user.name);
+  }, [user?.name]);
 
   useEffect(() => {
     // Unirse por código exige una sesión activa: sin ella no se consulta nada.

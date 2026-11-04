@@ -220,7 +220,7 @@ export function Mas() {
         <p className="dialog-text">
           {confirm === "delete"
             ? "Se borrarán tu cuenta y los hogares que creaste. No se puede deshacer."
-            : "Podrás volver a entrar cuando quieras con tu correo."}
+            : "Podrás volver a entrar cuando quieras con tu cuenta de Google."}
         </p>
         <div className="dialog-actions">
           <Button variant="ghost" onClick={() => setConfirm(null)} disabled={busy}>
