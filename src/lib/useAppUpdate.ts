@@ -56,8 +56,8 @@ const HINTS: Record<Platform, string> = {
  *   service worker; el botón recarga con la versión nueva.
  * - **Android:** lee `latest.json` de la última release de GitHub y ofrece
  *   abrir la descarga del APK (se instala a mano).
- * - **Windows (Tauri):** usa el plugin oficial (comprobar, descargar, instalar)
- *   y reinicia con `plugin-process`.
+ * - **Windows (Electron):** usa `electron-updater` a través del puente seguro
+ *   `window.nido` (comprobar, descargar, instalar) y reinicia la app.
  */
 export function useAppUpdate(): AppUpdate {
   const platform = getPlatform();

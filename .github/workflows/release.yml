@@ -97,33 +97,25 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Preparar Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Caché de Rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri -> target
-
       - name: Instalar dependencias
         run: npm ci
 
+      # electron-builder arma el NSIS con `latest.yml` y el `.blockmap` para que
+      # `electron-updater` pueda ofrecer la actualización automática.
       - name: Compilar el instalador
         env:
-          # Clave PRIVADA del actualizador (contenido del archivo). Sin ella, el
-          # instalador se crea igual pero sin actualización automática.
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          RELEASE_BASE: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: npm run tauri:build
+        run: npm run dist:win
 
       - name: Guardar los instaladores
         uses: actions/upload-artifact@v4
         with:
           name: nido-windows
-          path: dist-native/*
+          path: |
+            release/Nido-Setup-*.exe
+            release/Nido-Setup-*.exe.blockmap
+            release/latest.yml
           if-no-files-found: error
 
   # ---------------------------------------------------------------- Release
@@ -147,6 +139,11 @@ jobs:
           name: nido-windows
           path: dist-native
 
+      - name: Generar latest.json (versión para Android)
+        env:
+          RELEASE_BASE: https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.tag || github.ref_name }}
+        run: node scripts/make-latest-json.mjs
+
       - name: Publicar con gh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -168,7 +165,7 @@ jobs:
           } > RELEASE_NOTES.md
 
           shopt -s nullglob
-          files=(dist-native/Nido.apk dist-native/Nido-setup.exe dist-native/Nido-setup.exe.sig dist-native/Nido.msi dist-native/Nido.msi.sig dist-native/latest.json)
+          files=(dist-native/Nido.apk dist-native/Nido-Setup-*.exe dist-native/Nido-Setup-*.exe.blockmap dist-native/latest.yml dist-native/latest.json)
           printf 'Se subirán: %s\n' "${files[@]}"
 
           if gh release view "$TAG" >/dev/null 2>&1; then

@@ -100,8 +100,6 @@ Ve al repositorio en GitHub → **Settings** → **Secrets and variables** →
 | --- | --- |
 | `ANDROID_KEYSTORE_BASE64` | el keystore convertido a texto (comando abajo) |
 | `ANDROID_KEYSTORE_PASSWORD` | la contraseña del keystore (archivo `keystore-password.txt`) |
-| `TAURI_SIGNING_PRIVATE_KEY` | el **contenido** del archivo `nido-updater.key` |
-| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | la contraseña (archivo `updater-password.txt`) |
 | `VITE_SUPABASE_URL` | `https://TU_REF.supabase.co` (si no está ya) |
 | `VITE_SUPABASE_ANON_KEY` | la clave **anon public** (si no está ya) |
 
@@ -123,18 +121,6 @@ Eso deja el texto en el portapapeles: pégalo en el secreto
 Get-Content "C:\Users\mario\nido-secrets\keystore-password.txt"
 ```
 
-**Clave privada del actualizador** (contenido completo):
-
-```powershell
-Get-Content "C:\Users\mario\nido-secrets\nido-updater.key" -Raw | Set-Clipboard
-```
-
-**Contraseña del actualizador**:
-
-```powershell
-Get-Content "C:\Users\mario\nido-secrets\updater-password.txt"
-```
-
 ---
 
 ## 4. Guardar una copia de seguridad de las claves (10 minutos)
@@ -143,8 +129,6 @@ Cópialas a un lugar seguro (un USB, un gestor de contraseñas, un disco externo
 
 - `C:\Users\mario\nido-secrets\nido-release.jks` (keystore de Android)
 - `keystore-password.txt`
-- `nido-updater.key` y `updater-password.txt`
-- `nido-updater.key.pub` (la pública; esta no es secreta)
 
 **Si pierdes el keystore o su contraseña, no podrás actualizar la app ya
 instalada**: Android exige que la versión nueva esté firmada con la misma
@@ -187,7 +171,7 @@ https://github.com/enriquexv17-del/nido/releases/latest
 
 ## 7. Instalar en Windows (5 minutos)
 
-1. Baja **Nido-setup.exe** de la release.
+1. Baja **Nido-Setup-&lt;versión&gt;.exe** de la release.
 2. Windows mostrará el aviso azul de **SmartScreen** («Windows protegió tu
    PC»). Es normal: el instalador no está firmado con un certificado de pago.
    Pulsa **Más información** → **Ejecutar de todas formas**.
@@ -204,17 +188,16 @@ iPhone.
 
 ## 9. (Opcional) Compilar el instalador en tu PC
 
-Esta máquina tiene Rust, pero **le falta Visual Studio Build Tools (C++) y
-espacio en disco** (hay ~6 GB libres y el paquete pide ~7–10 GB). Solo hace
-falta si quieres compilar el instalador sin depender de GitHub.
+Con Electron **no hace falta Rust ni Visual Studio Build Tools**: electron-builder
+descarga todo lo que necesita. Solo necesitas espacio en disco.
 
-1. Libera espacio (que queden al menos 15 GB libres en `C:`).
-2. Abre PowerShell **como administrador** y ejecuta:
+1. Libera espacio (el empaquetado de Electron usa ~1–2 GB).
+2. En la carpeta del proyecto:
    ```powershell
-   winget install --id Microsoft.VisualStudio.2022.BuildTools --accept-package-agreements --accept-source-agreements --override "--quiet --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+   npm run dist:win
    ```
-3. Cuando termine, `npm run tauri:build` compilará el instalador y dejará los
-   archivos en `dist-native\`.
+3. Al terminar, los archivos quedan en `release\`:
+   `Nido-Setup-<versión>.exe`, su `.blockmap` y `latest.yml`.
 
 El **Android SDK** (Android Studio) tampoco está: hazlo solo si quieres compilar
 el APK en tu PC. Con la release de GitHub no lo necesitas.

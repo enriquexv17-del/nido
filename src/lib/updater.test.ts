@@ -61,7 +61,7 @@ describe("parseLatest", () => {
     });
   });
 
-  it("acepta version + body (formato de Tauri)", () => {
+  it("acepta version + body (notas en texto)", () => {
     expect(parseLatest({ version: "1.2.3", body: "Novedades" })).toEqual({
       version: "1.2.3",
       notes: ["Novedades"]

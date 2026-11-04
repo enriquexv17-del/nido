@@ -37,43 +37,36 @@ el nombre del repositorio. La detección de plataforma está en
   `C:\Users\mario\nido-secrets\nido-release.jks`. Sin ese archivo, el release se
   firma con la clave de depuración.
 
-## Windows (Tauri 2)
+## Windows (Electron)
 
-- Config: `src-tauri/tauri.conf.json` (`com.nido.app`, `Nido`, versión leída de
-  `package.json`).
-- Ventana 1100×760, mínimo 400×640. Bundle NSIS + MSI, instalación por usuario.
+- Config de empaquetado: `electron-builder.yml` (NSIS, instalación por usuario,
+  salida en `release/`).
+- Proceso principal: `electron/main.cjs`; puente seguro `electron/preload.cjs`.
+- Ventana de escritorio, `contextIsolation: true`, `nodeIntegration: false` e
+  instancia única. Carga `dist/index.html` (build `desktop`, base `./`).
+- Enlaces externos y login con Google se abren en el navegador del sistema
+  (`shell.openExternal`); el regreso usa el protocolo `com.nido.app://auth`.
 - Compilar:
   ```powershell
-  npm run tauri:build   # scripts/tauri-build.mjs
+  npm run dist:win   # build:desktop + electron-builder --win nsis
   ```
-  El script compila `build:desktop`, ejecuta `tauri build`, firma los artefactos
-  del actualizador y los copia (con `latest.json`) a `dist-native/`.
-- Requiere: Rust (`rustup`), **Visual Studio Build Tools** con «Desarrollo para
-  el escritorio con C++» y WebView2 (viene con Windows 10/11).
+  Deja `release\Nido-Setup-<versión>.exe`, su `.blockmap` y `latest.yml`.
 
 ## Actualizaciones
 
 Cada plataforma usa su mecanismo (`src/lib/updater.ts` y
 `src/lib/useAppUpdate.ts`):
 
-- **Web/PWA:** service worker `autoUpdate` en modo «prompt»; la pantalla
-  Actualizaciones recarga con la versión nueva.
+- **Web/PWA:** service worker en modo «prompt»; la pantalla Actualizaciones
+  recarga con la versión nueva.
 - **Android:** lee `latest.json` de la última release (si falla, el
   `version.json` publicado), lo compara con la versión instalada
   (`@capacitor/app`) y abre la descarga del APK (`@capacitor/browser`). La
   instalación es manual, y la pantalla lo explica.
-- **Windows:** `@tauri-apps/plugin-updater` (comprobar y descargar) y
-  `@tauri-apps/plugin-process` (reiniciar). El endpoint es
-  `https://github.com/enriquexv17-del/nido/releases/latest/download/latest.json`.
-
-### Claves del actualizador
-
-- Privada: `C:\Users\mario\nido-secrets\nido-updater.key` (+ contraseña en
-  `updater-password.txt`). **Nunca** al repositorio.
-- Pública: `plugins.updater.pubkey` en `src-tauri/tauri.conf.json`.
-- Se generaron con `npx tauri signer generate` (script `scripts/_gen-updater-keys.mjs`).
-- Si cambias de claves, hay que volver a publicar una versión: las instaladas
-  solo aceptan firmas hechas con la clave privada correspondiente.
+- **Windows (Electron):** `electron-updater` en el proceso principal, expuesto
+  por `window.nido` (comprobar, descargar, instalar y reiniciar). El proveedor
+  es GitHub (`enriquexv17-del/nido`); si no hay release legible, la pantalla
+  muestra «versión actual» sin romperse.
 
 ## Publicar
 
@@ -85,9 +78,10 @@ git push origin v1.0.0
 ```
 
 Compila el APK (Linux, con Android SDK del runner) y el instalador (Windows,
-con Rust), y crea la release con `gh release create` adjuntando:
+con electron-builder), y crea la release con `gh release create` adjuntando:
 
-`Nido.apk`, `Nido-setup.exe` (+ `.sig`), `Nido.msi` (+ `.sig`) y `latest.json`.
+`Nido.apk`, `Nido-Setup-<versión>.exe` (+ `.blockmap`), `latest.yml` y
+`latest.json`.
 
 Nunca se suben keystores ni claves privadas.
 
@@ -95,13 +89,13 @@ Nunca se suben keystores ni claves privadas.
 
 ```
 android/                     proyecto Capacitor
-src-tauri/                   proyecto Tauri
+electron/                    proceso principal y preload de Electron
 scripts/build.mjs            build por destino
 scripts/android-build.mjs    APK/AAB
 scripts/android-version.mjs  versión de Android
-scripts/gen-native-assets.mjs íconos y splash
-scripts/tauri-build.mjs      instalador de Windows
-scripts/make-latest-json.mjs manifiesto del actualizador
+scripts/gen-native-assets.mjs íconos, splash y build/icon.png
+scripts/make-latest-json.mjs manifiesto de versión (Android)
+electron-builder.yml         empaquetado de Windows (NSIS)
 .github/workflows/deploy.yml  web a Pages
 .github/workflows/release.yml APK + instalador + release
 ```

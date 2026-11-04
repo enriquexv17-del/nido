@@ -21,13 +21,14 @@ export function publicBaseUrl(): string {
 /**
  * A dónde debe volver Supabase tras el login con Google.
  *
- * - **Android:** al esquema propio (`com.nido.app://auth`), que la app captura
- *   con `App.addListener("appUrlOpen")`.
+ * - **Android / desktop (Electron):** al esquema propio (`com.nido.app://auth`),
+ *   que la app captura con `App.addListener("appUrlOpen")` en Android y con el
+ *   protocolo registrado por el instalador en Electron.
  * - **web/PWA:** a la base pública de siempre.
- * - **desktop (Tauri):** igual que web (en esta versión no hay deep link).
  */
 export function oauthRedirectUrl(): string {
-  if (getPlatform() === "android") return `${ANDROID_AUTH_SCHEME}://auth`;
+  const platform = getPlatform();
+  if (platform === "android" || platform === "desktop") return `${ANDROID_AUTH_SCHEME}://auth`;
   return publicBaseUrl();
 }
 

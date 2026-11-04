@@ -18,8 +18,6 @@ scripts/_*.mjs
 # Empaquetado nativo
 dist-native
 release
-src-tauri/target
-src-tauri/gen
 android/keystore.properties
 android/version.properties
 android/local.properties

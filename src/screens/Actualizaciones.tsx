@@ -14,7 +14,7 @@ const DOWNLOAD_MS = 2600;
  * - **web/PWA:** compara con `version.json` y recarga con el service worker nuevo.
  * - **Android:** lee la última release y ofrece abrir la descarga del APK, que
  *   se instala a mano.
- * - **Windows:** el actualizador de Tauri descarga y luego instala y reinicia.
+ * - **Windows:** el actualizador de Electron descarga y luego instala y reinicia.
  */
 export function Actualizaciones() {
   const {

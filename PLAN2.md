@@ -26,7 +26,7 @@ y datos reales.
 - **motion** (sucesora de Framer Motion) + `LazyMotion`/`domAnimation` para las
   animaciones; CSS puro para lo simple.
 - **Vitest** para el cálculo; **Playwright** para flujos, capturas y `perf`.
-- **Capacitor** (Android), **Tauri** (Windows), **PWA** (iPhone).
+- **Capacitor** (Android), **Electron** (Windows), **PWA** (iPhone).
 - **GitHub Actions** para publicar web y Releases.
 
 ## Arquitectura de datos
@@ -119,7 +119,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | G | Animaciones escenas 9–11 + estados (skeletons, vacío, error, sin conexión) | ✔ |
 | H | Meses navegables + «Copiar de octubre» + caché sin conexión | ✔ |
 | I | Pantalla Actualizaciones funcional | ✔ |
-| J | Empaquetado (Capacitor Android + Tauri Windows) | pendiente |
+| J | Empaquetado (Capacitor Android + Electron Windows) | pendiente |
 | K | GitHub Actions (Pages + Releases) | pendiente |
 | L | Pruebas de flujos + `perf` + `lighthouse` + capturas | ✔ |
 | M | README + entrega final | pendiente |
@@ -145,7 +145,7 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 | Animaciones ≥ 55 fps con CPU ×4 | ✔ | 60.2 fps y 0 tareas largas en la ventana de animación (`npm run perf`) |
 | Diseño sin cambios vs. Fase 1 | ✔ | 16 rutas en `capturas-fase3/{movil,pc}` comparadas con la maqueta |
 | APK firmado | pendiente | requiere Android SDK + keystore (tuyo) |
-| Instalador de PC | pendiente | requiere Rust/WebView2 (tuyo) |
+| Instalador de PC | pendiente | se compila con Electron (ver «Etapa Electron») |
 | PWA iPhone | pendiente | ya existe; se actualiza sola |
 | URL pública | pendiente | requiere tu repo de GitHub |
 
@@ -156,9 +156,10 @@ Internet 6.88 · Comida 49.60 (suma 146.48).
 2. **Sin proyecto Supabase real** en el entorno: la app corre en **modo prueba**
    (datos simulados) y el código real queda listo. Los archivos `.env.example`,
    la migración SQL y los scripts permiten activarlo con tus claves.
-3. **Sin Android SDK ni Rust** en este equipo: se entregan `capacitor.config.ts`,
-   el directorio `android/` (generado) y `src-tauri/` con sus scripts; el
-   compilado final (APK / `.msi`) lo firma y publica en tu máquina o en CI.
+3. **Sin Android SDK** en este equipo: se entregan `capacitor.config.ts`, el
+   directorio `android/` (generado) y sus scripts; el APK final lo firma y
+   publica en tu máquina o en CI. Windows se empaqueta con Electron
+   (`electron/` + `electron-builder.yml`, ver «Etapa Electron»).
 4. **RAE/acentos en mensajes de commit:** el CLI de Git en Windows los escribe
    sin acentos; el texto visible de la app sí los respeta.
 5. **`NidoProvider` se añadió ya en A1** (no en B): `session.tsx` ahora lee las
@@ -390,7 +391,7 @@ suma exactamente su monto.
 ## Fase 5B · Empaquetado para Android y Windows (en curso)
 
 Esta etapa **no rediseña nada**: solo empaqueta la web ya terminada como app de
-Android (Capacitor) y de Windows (Tauri 2), y hace reales las actualizaciones.
+Android (Capacitor) y de Windows (Electron), y hace reales las actualizaciones.
 
 ### Paso 0 · Diagnóstico del entorno (esta máquina)
 
@@ -400,7 +401,7 @@ Android (Capacitor) y de Windows (Tauri 2), y hace reales las actualizaciones.
 | npm | ✔ | 11.19.0 |
 | Java (JDK) | ✔ | OpenJDK 21.0.12.1 LTS (`java` y `javac`) |
 | Capacitor CLI | ✔ | 8.6.0 (`npx cap`) |
-| Tauri CLI | ✔ | 2.12.4 (`npx tauri`; binario prebuilt, no exige Rust para andamiar) |
+| Tauri CLI | ✔ | 2.12.4 (se usó en la primera pasada; **retirado** en la Etapa Electron) |
 | WebView2 (runtime) | ✔ | 156.0.4314.58 |
 | winget | ✔ | v1.29.380 (para instalar lo que falte) |
 | Rust / `rustc` / `cargo` | ✘ | **no instalado** |
@@ -413,20 +414,19 @@ Android (Capacitor) y de Windows (Tauri 2), y hace reales las actualizaciones.
 | Supabase real | ✔ | `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` en `.env` local y como secretos de Actions |
 
 **Conclusión.** La web, Supabase y Pages ya están hechos y verificados. En esta
-máquina **no** hay Rust/MSVC ni Android SDK, así que el `.msi`/`.exe` y el APK
-**no se pueden compilar aquí**: se dejan los scripts y la configuración listos y
-el compilado final lo produce GitHub Actions (Paso 5). El andamiaje de Android
-(`npx cap add android`) y de Tauri (`src-tauri/`) sí se generan aquí, porque no
-necesitan esos compiladores.
+máquina **no** hay Android SDK, así que el APK **no se puede compilar aquí**: se
+dejan los scripts y la configuración listos y el compilado final lo produce
+GitHub Actions (Paso 5). El andamiaje de Android (`npx cap add android`) sí se
+genera aquí. Windows se rehízo con **Electron** (no necesita Rust ni MSVC).
 
 ### Decisiones de empaquetado
 
 | Tema | Decisión |
 | --- | --- |
-| Identificador de app | `com.nido.app` (Android y Tauri) |
+| Identificador de app | `com.nido.app` (Android y Electron) |
 | Nombre | `Nido` |
 | Base de Vite nativa | `VITE_BASE=./` (`build:android`/`build:desktop`); Pages sigue con `/nido/` |
-| Service worker | **no** se registra dentro de Capacitor/Tauri (ya viene empaquetada) |
+| Service worker | **no** se registra dentro de Capacitor/Electron (ya viene empaquetada) |
 | Actualizaciones | una utilidad `src/lib/updater.ts` con interfaz común por plataforma |
 | Firma Android | keystore **fuera del repo**; sin él, APK de depuración |
 | Firma Windows | sin firma de código: SmartScreen avisará (se documenta) |
@@ -438,7 +438,7 @@ necesitan esos compiladores.
 | 0 | Diagnóstico del entorno (este apartado) | ✔ `71fa3a2` |
 | 1 | Web lista para nativo (`platform.ts`, build relativo, sin SW en nativo, Google Android) | ✔ `a81d5d8` |
 | 2 | Android con Capacitor (config, proyecto, íconos, firma, scripts) | ✔ `c51fc23` |
-| 3 | Windows con Tauri 2 (`src-tauri/`, config, íconos, scripts) | ✔ |
+| 3 | Windows con Electron (`electron/`, `electron-builder.yml`; sustituye a Tauri) | ⏳ Etapa Electron |
 | 4 | Actualizaciones reales (web / Windows / Android) | ✔ `b2dbeee` |
 | 5 | GitHub Actions (`release.yml`: APK + instalador + `latest.json`) | ✔ |
 | 6 | Pruebas (unitarias de `platform.ts`/versiones, build/test/Playwright) | ✔ |
@@ -473,37 +473,31 @@ necesitan esos compiladores.
 - Scripts: `android:sync`, `android:build:debug`, `android:build:release`
   (APK → `dist-native/Nido-<versión>.apk`) y `android:bundle` (AAB).
 
-### Windows con Tauri 2
+### Windows con Electron
 
-- Proyecto en `src-tauri/` (generado con `npx tauri init`): `tauri.conf.json`,
-  `Cargo.toml`, `build.rs`, `src/lib.rs`, `src/main.rs`, `capabilities/default.json`.
-- `productName Nido`, `identifier com.nido.app`, versión desde `package.json`
-  (`"version": "../package.json"`), ventana 1100×760 con mínimo 400×640.
-- Carga el build `build:desktop` (`../dist`) y en desarrollo usa
-  `http://localhost:5173`.
-- CSP cerrada: solo `self`, `https://*.supabase.co`, `wss://*.supabase.co` y los
-  dominios de GitHub necesarios para leer la release.
-- Bundle `nsis` + `msi`, `createUpdaterArtifacts: true`, NSIS en español e
-  instalación por usuario (sin UAC). WebView2 se descarga sola si hace falta.
-- Actualizador: endpoint
-  `https://github.com/enriquexv17-del/nido/releases/latest/download/latest.json`
-  y clave **pública** en `plugins.updater.pubkey`. La privada vive fuera del repo
-  (`C:\Users\mario\nido-secrets\nido-updater.key` + contraseña en
-  `updater-password.txt`). El par se generó con `npx tauri signer generate`.
-- Plugins Rust `tauri-plugin-updater` y `tauri-plugin-process`; permisos
-  `updater:default` y `process:default` en `capabilities/default.json`.
-- Íconos generados con `npx tauri icon src-tauri/app-icon.png` (desde el logo).
-- Script `npm run tauri:build` → `scripts/tauri-build.mjs`: compila, firma,
-  copia instaladores y firmas a `dist-native/` y escribe `latest.json`
-  (`scripts/make-latest-json.mjs`).
+- Proyecto en `electron/`: `main.cjs` (proceso principal) y `preload.cjs`
+  (puente seguro `window.nido`).
+- `productName Nido`, `appId com.nido.app`, versión desde `package.json`.
+- Carga el build `build:desktop` (`dist/index.html`, base `./`, HashRouter),
+  `contextIsolation: true`, `nodeIntegration: false`, instancia única.
+- Enlaces externos y login con Google abren en el navegador del sistema
+  (`shell.openExternal`); el regreso usa el protocolo `com.nido.app://auth`,
+  registrado por el instalador NSIS.
+- Empaquetado `electron-builder.yml`: NSIS, instalación por usuario,
+  `artifactName` `Nido-Setup-${version}.exe` y salida en `release/`.
+- Íconos: `build/icon.png` (lo genera `npm run native:assets`); electron-builder
+  lo convierte al `.ico` del instalador.
+- Script `npm run dist:win` = `build:desktop` + `electron-builder --win nsis`.
 
 ### Actualizaciones por plataforma
 
-- `src/lib/platform.ts` decide la rama (`web` / `android` / `desktop`).
+- `src/lib/platform.ts` decide la rama (`web` / `android` / `desktop`);
+  `isElectron()` mira `window.nido.isElectron`.
 - `src/lib/updater.ts`: `fetchLatest` (web: `version.json`; Android: `latest.json`
   con respaldo en el `version.json` publicado), `getInstalledVersion`
-  (`@capacitor/app` o `@tauri-apps/api/app`), `openDownload` (`@capacitor/browser`),
-  `checkDesktopUpdate` (`download` + `install`) y `relaunchApp`.
+  (`@capacitor/app` o `window.nido.appVersion`), `openDownload` (Electron:
+  `window.nido.openExternal`; Android: `@capacitor/browser`),
+  `checkDesktopUpdate` (`download` + `install` por el puente) y `relaunchApp`.
 - `src/lib/useAppUpdate.ts` devuelve un estado único para las tres plataformas y
   `src/screens/Actualizaciones.tsx` usa el mecanismo real sin cambiar el diseño
   (mismas clases y textos en web): web instala el service worker y recarga;
@@ -513,11 +507,13 @@ necesitan esos compiladores.
 
 ### Entorno tras el Paso 3
 
-- Rust `stable-x86_64-pc-windows-msvc` instalado con `winget` (`rustc`/`cargo`
-  1.99.1). MSVC Build Tools: la instalación **falló por falta de espacio**
-  (código `0x80070070`, ~6.3 GB libres). Android SDK/`adb`: siguen sin estar.
-- Por eso el `.msi`/`.exe` y el APK **no se compilan en esta máquina**: los
-  produce GitHub Actions (Paso 5). Ver `PENDIENTES_MARIO.md`.
+- Rust `stable-x86_64-pc-windows-msvc` se instaló con `winget` para la primera
+  pasada de Tauri; ya **no se usa** (Windows se empaqueta con Electron).
+- MSVC Build Tools: la instalación **falló por falta de espacio**
+  (código `0x80070070`). Android SDK/`adb`: siguen sin estar.
+- Por eso el APK **no se compila en esta máquina**: lo produce GitHub Actions
+  (Paso 5). El instalador de Windows **sí** se intenta con Electron. Ver
+  `PENDIENTES_MARIO.md`.
 
 ### Firma Android (Paso E)
 
@@ -536,7 +532,7 @@ necesitan esos compiladores.
 | Trabajo | Runner | Qué hace |
 | --- | --- | --- |
 | `android` | ubuntu | Android SDK + Java 21, `android-build.mjs assembleRelease` → `Nido.apk` |
-| `windows` | windows | Rust + `npm run tauri:build` → instaladores, firmas y `latest.json` |
+| `windows` | windows | `npm run dist:win` (electron-builder) → instalador NSIS, `.blockmap` y `latest.yml` |
 | `release` | ubuntu | `gh release create`/`upload` con todos los artefactos |
 
 Se dispara con una etiqueta `v*` o a mano. `deploy.yml` (Pages) no se tocó.
@@ -582,3 +578,30 @@ Se dispara con una etiqueta `v*` o a mano. `deploy.yml` (Pages) no se tocó.
 | Push a `main` | ⏳ bloqueado: token sin permiso `workflow` (ver `PENDIENTES_MARIO.md`, paso 0) |
 | Release en GitHub | pendiente (se crea al subir la etiqueta `v1.0.0` tras los secretos) |
 | Secretos en el repo | ninguno (`git ls-files` sin keystores ni claves) |
+
+## Etapa Electron · Empaquetado de Windows (en curso)
+
+Se **abandona Tauri** y Windows se empaqueta con **Electron + electron-builder**,
+usando como referencia la configuración de la app AZKA Creative OS de Mario
+(`C:\Users\mario\AZKA-Creative-OS`). No se toca el diseño, la matemática ni la
+web publicada (`deploy.yml` sigue con base `/nido/`).
+
+### Estado y decisiones
+
+- Respaldo: etiqueta `respaldo-antes-electron` (para volver atrás si algo falla).
+- Espacio en `C:` al empezar: **9.85 GB libres** (por debajo de 10 GB): se anota
+  y se vigila; se prioriza el `.exe`.
+- Paso 1 (quitar Tauri): se borra `src-tauri/` y `scripts/tauri-build.mjs`, se
+  quitan `@tauri-apps/*` y los scripts `tauri*`, y la detección de plataforma
+  pasa a `isElectron()` (`window.nido`). Commit: _(Paso 1)_.
+- Paso 2 (Windows/Electron): `electron/main.cjs` + `electron/preload.cjs`,
+  `electron-builder.yml` (NSIS, salida `release/`), `npm run dist:win`.
+- Paso 3 (Android): APK firmado → `release/Nido-<versión>.apk` (requiere Android
+  SDK; si falta, se documenta como pendiente de Mario/Actions).
+- Paso 4 (Actualizaciones): `electron-updater` (GitHub) vía `preload.cjs`, web
+  con service worker y Android con `latest.json`, sin cambiar el diseño.
+- Paso 5 (verificación): build/vitest/playwright, valores de oro, `git ls-files`
+  sin secretos, cero menciones de Tauri y docs al día.
+
+**Nota de push:** los commits se quedan **locales** (sin `git push`): el token de
+Mario no tiene permiso para el workflow. Ver el paso 0 de `PENDIENTES_MARIO.md`.

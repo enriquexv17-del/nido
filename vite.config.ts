@@ -8,7 +8,7 @@ import { VitePWA } from "vite-plugin-pwa";
  *
  * La base la controla `VITE_BASE` (GitHub Pages la define con el nombre del
  * repo). Si no, la web usa `/nido/` y las apps nativas `./` (rutas relativas
- * que funcionan dentro de Capacitor `capacitor://localhost` y Tauri).
+ * que funcionan dentro de Capacitor `capacitor://localhost` y Electron).
  */
 type Target = "web" | "android" | "desktop";
 
@@ -27,7 +27,7 @@ export default defineConfig(({ command }) => {
       react(),
       VitePWA({
         // La app nativa NO lleva service worker: se actualiza por su propio
-        // mecanismo (APK / actualizador de Tauri). El plugin se desactiva por
+        // mecanismo (APK / actualizador de Electron). El plugin se desactiva por
         // completo en los builds nativos.
         disable: isNative,
         // "prompt": la app avisa cuando hay una versión nueva y la instala desde

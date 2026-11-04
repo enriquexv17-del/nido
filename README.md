@@ -63,7 +63,7 @@ actualiza sola cuando hay una versión nueva.
 Además de la PWA, Nido se empaqueta como app:
 
 - **Android** (Capacitor): APK firmado, publicado en la sección *Releases*.
-- **Windows** (Tauri 2): instalador NSIS/MSI con actualización automática.
+- **Windows** (Electron): instalador NSIS con actualización automática.
 
 Las instrucciones para instalarlas (y el aviso de SmartScreen) están en
 [`INSTALAR.md`](INSTALAR.md). El detalle técnico del empaquetado, en

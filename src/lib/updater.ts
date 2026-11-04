@@ -5,13 +5,13 @@
  * - **web/PWA:** `version.json` en el propio sitio + service worker.
  * - **Android:** `latest.json` de la última release y, si no se puede leer,
  *   `version.json` publicado. El APK se descarga desde la release.
- * - **Windows (Tauri):** el plugin oficial del actualizador lee `latest.json`,
- *   descarga y firma la verificación; después se reinicia la app.
+ * - **Windows (Electron):** `electron-updater` en el proceso principal, expuesto
+ *   de forma segura por `window.nido`; descarga, instala y reinicia.
  *
  * Nada de aquí imprime ni guarda secretos: solo URLs públicas.
  */
 import { APP_VERSION } from "./appInfo";
-import { getPlatform, type Platform } from "./platform";
+import { getPlatform, nidoBridge, type Platform } from "./platform";
 
 /** Carpeta de descargas de la última release (los nombres los fija la publicación). */
 export const RELEASES_LATEST =
@@ -79,7 +79,7 @@ async function fetchJson(url: string): Promise<unknown> {
  *
  * Web: `version.json` del propio sitio (misma ruta que usa el service worker).
  * Android: `latest.json` de la release; si falla, el `version.json` publicado.
- * Desktop: no se usa (el plugin de Tauri consulta la release por su cuenta).
+ * Desktop: no se usa (Electron consulta la release por su cuenta).
  */
 export async function fetchLatest(platform: Platform = getPlatform()): Promise<LatestInfo> {
   if (platform === "android") {
@@ -106,19 +106,30 @@ export async function getInstalledVersion(
     }
   }
   if (platform === "desktop") {
-    try {
-      const { getVersion } = await import("@tauri-apps/api/app");
-      const version = await getVersion();
-      if (version) return version;
-    } catch {
-      /* fuera de Tauri: cae a la versión compilada */
+    const bridge = nidoBridge();
+    if (bridge?.appVersion) {
+      try {
+        const version = await bridge.appVersion();
+        if (version) return version;
+      } catch {
+        /* sin puente: cae a la versión compilada */
+      }
     }
   }
   return APP_VERSION;
 }
 
-/** Abre una URL en el navegador del sistema (Android) o en una pestaña nueva. */
+/** Abre una URL en el navegador del sistema (Electron/Android) o en una pestaña nueva. */
 export async function openDownload(url: string): Promise<void> {
+  const bridge = nidoBridge();
+  if (bridge?.openExternal) {
+    try {
+      await bridge.openExternal(url);
+      return;
+    } catch {
+      /* sin puente de Electron: cae al resto */
+    }
+  }
   try {
     const { Browser } = await import("@capacitor/browser");
     await Browser.open({ url });
@@ -129,7 +140,7 @@ export async function openDownload(url: string): Promise<void> {
   if (typeof window !== "undefined") window.open(url, "_blank", "noopener");
 }
 
-/* ------------------------------- Windows (Tauri) ------------------------------- */
+/* ------------------------------ Windows (Electron) ----------------------------- */
 
 export interface DesktopUpdate {
   currentVersion: string;
@@ -143,38 +154,36 @@ export interface DesktopUpdate {
 
 /** Comprueba si hay una versión nueva. `null` = estás al día (o sin updater). */
 export async function checkDesktopUpdate(): Promise<DesktopUpdate | null> {
-  const { check } = await import("@tauri-apps/plugin-updater");
-  const update = await check();
-  if (!update) return null;
+  const bridge = nidoBridge();
+  if (!bridge?.checkForUpdates) return null;
 
-  let total = 0;
-  let downloaded = 0;
+  const found = await bridge.checkForUpdates();
+  if (!found) return null;
+
+  const currentVersion = await getInstalledVersion("desktop");
   return {
-    currentVersion: update.currentVersion,
-    version: update.version,
-    notes: normalizeNotes(update.body),
+    currentVersion,
+    version: found.version,
+    notes: normalizeNotes(found.notes),
     download: async (onProgress) => {
-      await update.download((event) => {
-        if (event.event === "Started") {
-          total = event.data.contentLength ?? 0;
-        } else if (event.event === "Progress") {
-          downloaded += event.data.chunkLength;
-          if (onProgress && total > 0) {
-            onProgress(Math.min(100, Math.round((downloaded / total) * 100)));
-          }
-        } else if (event.event === "Finished") {
-          onProgress?.(100);
-        }
-      });
+      if (!onProgress || !bridge.onUpdateProgress) {
+        await bridge.downloadUpdate?.();
+        return;
+      }
+      const off = bridge.onUpdateProgress(onProgress);
+      try {
+        await bridge.downloadUpdate?.();
+      } finally {
+        off();
+      }
     },
     install: async () => {
-      await update.install({ restartAfterInstall: true });
+      await bridge.installUpdate?.();
     }
   };
 }
 
 /** Reinicia la app ya instalada (Windows). */
 export async function relaunchApp(): Promise<void> {
-  const { relaunch } = await import("@tauri-apps/plugin-process");
-  await relaunch();
+  await nidoBridge()?.relaunch?.();
 }

@@ -3,8 +3,8 @@
  * (arco maíz + tres puntos sobre fondo índigo `#18205F`).
  *
  * Android: rellena `android/app/src/main/res/` (adaptativos, monocromo y
- * splash en todas las densidades). Tauri: deja un PNG base de 1024 en
- * `src-tauri/app-icon.png` para `npx tauri icon`.
+ * splash en todas las densidades). Electron: deja un PNG base de 1024 en
+ * `build/icon.png`, que `electron-builder` convierte al `.ico` del instalador.
  *
  * Uso: `npm run native:assets`
  */
@@ -135,7 +135,7 @@ await writeFile(
   "utf8"
 );
 
-// PNG base para los íconos de Tauri (Paso 3 usa `npx tauri icon`).
-await png(roundedIcon(1024), join(root, "src-tauri", "app-icon.png"), 1024);
+// PNG base para los íconos de Electron (electron-builder lo usa como `icon`).
+await png(roundedIcon(1024), join(root, "build", "icon.png"), 1024);
 
 console.log(`Listo: ${count + 1} recursos nativos generados.`);

@@ -113,8 +113,7 @@ El workflow **Publicar versión (Android + Windows)**
 
 1. Antes de la primera vez, agrega los secretos (ver
    [`PENDIENTES_MARIO.md`](PENDIENTES_MARIO.md), paso 3):
-   `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
-   `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+   `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`
    (más `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` si usas el modo real).
 2. Sube la versión en `package.json` y en `public/version.json` (misma versión).
 3. Crea y empuja la etiqueta:
@@ -126,10 +125,12 @@ El workflow **Publicar versión (Android + Windows)**
 
 4. Sigue el avance en **Actions**. Al terminar, la release queda en
    `https://github.com/enriquexv17-del/nido/releases/latest` con:
-   `Nido.apk`, `Nido-setup.exe` (+`.sig`), `Nido.msi` (+`.sig`) y `latest.json`.
+   `Nido.apk`, `Nido-Setup-<versión>.exe` (+`.blockmap`), `latest.yml` y
+   `latest.json`.
 
-Sin los secretos de firma, el APK se firma con la clave de depuración y el
-instalador se compila **sin** actualización automática (el workflow lo avisa).
+Sin el keystore de firma, el APK se firma con la clave de depuración (el
+workflow lo avisa). El instalador de Windows se firma con la clave de
+electron-updater propia de la app.
 
 **Nunca** subas keystores, contraseñas ni la clave privada del actualizador.
 Viven en `C:\Users\mario\nido-secrets\` (fuera del repositorio).

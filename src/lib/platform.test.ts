@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getPlatform, isCapacitorNative, isTauri } from "./platform";
+import { getPlatform, isCapacitorNative, isElectron } from "./platform";
 
 /**
  * Detección de plataforma. En el entorno de pruebas (Node) no hay `window`,
@@ -12,13 +12,13 @@ describe("platform", () => {
 
   it("sin ventana, es web", () => {
     expect(getPlatform()).toBe("web");
-    expect(isTauri()).toBe(false);
+    expect(isElectron()).toBe(false);
     expect(isCapacitorNative()).toBe(false);
   });
 
-  it("dentro de Tauri es desktop", () => {
-    vi.stubGlobal("window", { __TAURI_INTERNALS__: {} });
-    expect(isTauri()).toBe(true);
+  it("dentro de Electron es desktop", () => {
+    vi.stubGlobal("window", { nido: { isElectron: true } });
+    expect(isElectron()).toBe(true);
     expect(getPlatform()).toBe("desktop");
   });
 
