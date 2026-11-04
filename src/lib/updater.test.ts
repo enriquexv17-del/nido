@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { compareVersions, fetchLatest, normalizeNotes, parseLatest } from "./updater";
+import {
+  checkDesktopUpdate,
+  compareVersions,
+  fetchLatest,
+  getInstalledVersion,
+  normalizeNotes,
+  parseLatest
+} from "./updater";
 
 /** Responde una `fetch` falsa con el JSON o el error indicados. */
 function mockFetch(handler: (url: string) => unknown) {
@@ -97,5 +104,57 @@ describe("fetchLatest", () => {
     const info = await fetchLatest("android");
     expect(info.version).toBe("1.3.0");
     expect(info.notes).toEqual(["Respaldo"]);
+  });
+});
+
+describe("escritorio (Electron)", () => {
+  it("sin puente window.nido no hay actualización", async () => {
+    vi.stubGlobal("window", {});
+    expect(await checkDesktopUpdate()).toBeNull();
+  });
+
+  it("lee la versión instalada del puente", async () => {
+    vi.stubGlobal("window", {
+      nido: { isElectron: true, appVersion: async () => "2.3.4" }
+    });
+    expect(await getInstalledVersion("desktop")).toBe("2.3.4");
+  });
+
+  it("devuelve la actualización y descarga/instala por el puente", async () => {
+    let progress: ((percent: number) => void) | null = null;
+    let installed = false;
+    vi.stubGlobal("window", {
+      nido: {
+        isElectron: true,
+        appVersion: async () => "1.0.0",
+        checkForUpdates: async () => ({ version: "1.1.0", notes: "Novedades" }),
+        onUpdateProgress: (cb: (percent: number) => void) => {
+          progress = cb;
+          return () => {
+            progress = null;
+          };
+        },
+        downloadUpdate: async () => {
+          progress?.(50);
+        },
+        installUpdate: async () => {
+          installed = true;
+        }
+      }
+    });
+
+    const update = await checkDesktopUpdate();
+    expect(update?.currentVersion).toBe("1.0.0");
+    expect(update?.version).toBe("1.1.0");
+    expect(update?.notes).toEqual(["Novedades"]);
+
+    let seen = 0;
+    await update?.download((percent) => {
+      seen = percent;
+    });
+    expect(seen).toBe(50);
+
+    await update?.install();
+    expect(installed).toBe(true);
   });
 });
